@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+    <defs>
+        <linearGradient id="paypro-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#312e81" />
+            <stop offset="40%" stop-color="#4f46e5" />
+            <stop offset="80%" stop-color="#06b6d4" />
+            <stop offset="100%" stop-color="#22d3ee" />
+        </linearGradient>
+    </defs>
+
+    <rect width="100%" height="100%" fill="transparent"/>
+
+    <g transform="translate(46, 46)">
+        <path d="M 320,100 
+                 C 390,100 420,150 420,210 
+                 C 420,290 350,340 270,340 
+                 L 190,340 
+                 L 190,400 
+                 C 190,415 180,420 165,420 
+                 L 125,420 
+                 C 110,420 100,415 100,400 
+                 L 100,120 
+                 C 100,50 170,0 250,0 
+                 C 330,0 390,40 410,100 
+                 L 340,120 
+                 C 330,90 290,65 250,65 
+                 C 205,65 165,95 165,140 
+                 L 165,275 
+                 L 260,275 
+                 C 310,275 350,245 350,205 
+                 C 350,165 310,140 270,140 
+                 L 220,140 
+                 L 240,75 
+                 L 320,75 Z" 
+              fill="url(#paypro-gradient)" />
+    </g>
+</svg>
