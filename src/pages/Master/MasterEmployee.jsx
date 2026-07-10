@@ -662,7 +662,7 @@ const MasterEmployee = () => {
       setTaxLoading(true);
       const token = localStorage.getItem('token');
       const params = new URLSearchParams({
-        page: taxPage,
+        page: taxPage - 1,
         size: taxPageSize,
       });
       if (taxSearch) params.append('search', taxSearch);
@@ -692,7 +692,7 @@ const MasterEmployee = () => {
       setTaxLoading(true);
       const token = localStorage.getItem('token');
       const params = new URLSearchParams({
-        page: taxPage,
+        page: taxPage - 1,
         size: taxPageSize,
       });
       if (taxSearch) params.append('search', taxSearch);

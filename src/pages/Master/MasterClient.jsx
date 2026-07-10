@@ -772,7 +772,9 @@ const MasterClient = () => {
         branch,
         status: role === 'SPV' ? status : undefined,
       };
+      const token = localStorage.getItem('token');
       const headers = {
+        'Authorization': `Bearer ${token}`,
         'user-id': user?.id || 1,
         'fullname': user?.username || (role === 'SPV' ? 'SPV HRD' : 'Staff HRD')
       };
@@ -809,7 +811,9 @@ const MasterClient = () => {
         status: role === 'SPV' ? status : undefined,
         ids: selectedIds.length > 0 ? selectedIds : undefined
       };
+      const token = localStorage.getItem('token');
       const headers = {
+        'Authorization': `Bearer ${token}`,
         'user-id': user?.id || 1,
         'fullname': user?.username || (role === 'SPV' ? 'SPV HRD' : 'Staff HRD'),
         'upliner-name': 'SPV HRD' // Default mock upliner
