@@ -14,6 +14,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { login } from '../store/slices/authSlice';
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
+
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ username: '', password: '' });
@@ -38,7 +41,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:8080/api/auth/login', formData);
+      const response = await axios.post(`${API_URL}/api/auth/login`, formData);
       
       const { token } = response.data;
 

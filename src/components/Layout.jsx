@@ -81,7 +81,7 @@ const Layout = ({ children }) => {
         { text: 'MASTER EMPLOYEE', path: '/master/employee', icon: <EmployeeIcon /> },
         { text: 'MASTER CLIENT', path: '/master/client' },
         { text: 'MASTER PIC PROJECT', path: '/master/picproject', allowedPositions: ['IT', 'SUPERVISOR', 'SPV'] },
-        { text: 'MASTER UANG KOMPENSASI', path: '/master/kompensasi', allowedPositions: ['IT', 'HR', 'FINANCE', 'STAFF', 'SUPERVISOR', 'SPV'] },
+        { text: 'MASTER UANG KOMPENSASI', path: '/master/pic-uk', allowedPositions: ['IT', 'HR', 'FINANCE', 'STAFF', 'SUPERVISOR', 'SPV'] },
         { text: 'MASTER LIBUR', path: '/master/libur' },
         { text: 'MASTER SWIFT CODE', path: '/master/swift', allowedPositions: ['IT', 'HR', 'FINANCE', 'STAFF', 'SUPERVISOR', 'SPV'] },
         { text: 'MASTER HOLD', path: '/master/hold', allowedPositions: ['IT', 'HR', 'FINANCE', 'STAFF', 'SUPERVISOR', 'SPV'] },

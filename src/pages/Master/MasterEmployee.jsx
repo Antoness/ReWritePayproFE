@@ -673,7 +673,7 @@ const MasterEmployee = () => {
       if (taxBranch) params.append('branch', taxBranch);
       if (taxStatusEmployee) params.append('statusEmployee', taxStatusEmployee);
       
-      const res = await axios.get(`http://localhost:8080/api/master-employee/tax?${params.toString()}`, {
+      const res = await axios.get(`${API_URL}/api/master-employee/tax?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setTaxData(res.data.content || []);
@@ -697,7 +697,7 @@ const MasterEmployee = () => {
       });
       if (taxSearch) params.append('search', taxSearch);
       
-      const res = await axios.get(`http://localhost:8080/api/master-employee/tax/history?${params.toString()}`, {
+      const res = await axios.get(`${API_URL}/api/master-employee/tax/history?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setTaxHistoryData(res.data.content || []);
@@ -718,7 +718,7 @@ const MasterEmployee = () => {
     }
     try {
       const token = localStorage.getItem('token');
-      await axios.put('http://localhost:8080/api/master-employee/tax/request', {
+      await axios.put(`${API_URL}/api/master-employee/tax/request`, {
         niks: taxSelectedIds,
         metodePajak: taxForm.metodePajak,
         komponenProject: taxForm.komponenProject
@@ -741,7 +741,7 @@ const MasterEmployee = () => {
     }
     try {
       const token = localStorage.getItem('token');
-      await axios.put('http://localhost:8080/api/master-employee/tax/approve', {
+      await axios.put(`${API_URL}/api/master-employee/tax/approve`, {
         niks: taxSelectedIds
       }, {
         headers: { Authorization: `Bearer ${token}` }
@@ -761,7 +761,7 @@ const MasterEmployee = () => {
     }
     try {
       const token = localStorage.getItem('token');
-      await axios.put('http://localhost:8080/api/master-employee/tax/reject', {
+      await axios.put(`${API_URL}/api/master-employee/tax/reject`, {
         niks: taxSelectedIds
       }, {
         headers: { Authorization: `Bearer ${token}` }
