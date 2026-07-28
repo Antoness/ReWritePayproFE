@@ -55,7 +55,7 @@ const UserList = () => {
   const fetchUsers = async (searchTerm = '', currentPage = 1, size = pageSize) => {
     setLoading(true);
     try {
-      const response = await axios.get(`http://localhost:8080/api/users`, {
+      const response = await axios.get(`${API_URL}/api/users`, {
         params: { search: searchTerm, page: currentPage - 1, size: size }
       });
       setUsers(response.data.content);
@@ -110,9 +110,9 @@ const UserList = () => {
     setSelectedUserNik(user.nik);
     setSelectedUpliner('');
     try {
-      const resPotential = await axios.get(`http://localhost:8080/api/users/potential-upliners/${user.nik}`);
+      const resPotential = await axios.get(`${API_URL}/api/users/potential-upliners/${user.nik}`);
       setPotentialUpliners(resPotential.data);
-      const resExisting = await axios.get(`http://localhost:8080/api/users/existing-upliners/${user.nik}`);
+      const resExisting = await axios.get(`${API_URL}/api/users/existing-upliners/${user.nik}`);
       setExistingUpliners(resExisting.data);
       setOpenApprovalModal(true);
     } catch (error) {
@@ -130,13 +130,13 @@ const UserList = () => {
       return;
     }
     try {
-      const response = await axios.post(`http://localhost:8080/api/users/add-upliner`, {
+      const response = await axios.post(`${API_URL}/api/users/add-upliner`, {
         nik: selectedUserNik,
         nikUpliner: selectedUpliner
       });
       showMessage(response.data.message, 'success');
       setSelectedUpliner('');
-      const resExisting = await axios.get(`http://localhost:8080/api/users/existing-upliners/${selectedUserNik}`);
+      const resExisting = await axios.get(`${API_URL}/api/users/existing-upliners/${selectedUserNik}`);
       setExistingUpliners(resExisting.data);
     } catch (error) {
       showMessage(error.response?.data?.message || 'Gagal menyimpan upliner', 'error');
@@ -160,14 +160,14 @@ const UserList = () => {
     const { type, data } = confirmDialog;
     try {
       if (type === 'UPLINER') {
-        const response = await axios.delete(`http://localhost:8080/api/users/delete-upliner`, {
+        const response = await axios.delete(`${API_URL}/api/users/delete-upliner`, {
           params: { nik: selectedUserNik, nikUpliner: data }
         });
         showMessage(response.data.message, 'success');
-        const resExisting = await axios.get(`http://localhost:8080/api/users/existing-upliners/${selectedUserNik}`);
+        const resExisting = await axios.get(`${API_URL}/api/users/existing-upliners/${selectedUserNik}`);
         setExistingUpliners(resExisting.data);
       } else if (type === 'RESET_PASSWORD') {
-        const response = await axios.post(`http://localhost:8080/api/users/reset-password`, { ids: data });
+        const response = await axios.post(`${API_URL}/api/users/reset-password`, { ids: data });
         showMessage(response.data.message, 'success');
         setSelected([]); // Clear selection after reset
       }
@@ -181,9 +181,9 @@ const UserList = () => {
   const handleSave = async () => {
     try {
       if (editMode) {
-        await axios.put(`http://localhost:8080/api/users/${selectedUserId}`, formData);
+        await axios.put(`${API_URL}/api/users/${selectedUserId}`, formData);
       } else {
-        await axios.post(`http://localhost:8080/api/users`, formData);
+        await axios.post(`${API_URL}/api/users`, formData);
       }
       setOpenModal(false);
       fetchUsers(search, page, pageSize);

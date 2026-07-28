@@ -1,9 +1,10 @@
 import React from 'react';
 import { Autocomplete, TextField, Typography } from '@mui/material';
 
-const SearchableSelect = ({ value, onChange, options, placeholder, minWidth = 200, multiple = false, error, helperText }) => {
+const SearchableSelect = ({ value, onChange, options = [], placeholder, minWidth = 200, multiple = false, error, helperText, freeSolo = false }) => {
   return (
     <Autocomplete
+      freeSolo={freeSolo}
       multiple={multiple}
       size="small"
       options={options}
@@ -11,6 +12,11 @@ const SearchableSelect = ({ value, onChange, options, placeholder, minWidth = 20
       onChange={(event, newValue) => {
         if (onChange) {
           onChange(newValue || (multiple ? [] : ''));
+        }
+      }}
+      onInputChange={(event, newInputValue, reason) => {
+        if (freeSolo && onChange && reason === 'input') {
+          onChange(newInputValue);
         }
       }}
       renderInput={(params) => (

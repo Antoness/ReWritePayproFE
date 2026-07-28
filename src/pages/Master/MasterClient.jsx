@@ -1,10 +1,12 @@
+import { useDynamicClientDropdowns } from "../../hooks/useDynamicClientDropdowns";
+
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { 
   Box, Typography, Paper, Grid, TextField, Button, Stack, Chip, Checkbox, IconButton,
   Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText, RadioGroup, FormControlLabel, Radio, FormControl,
-  Snackbar, Alert, ToggleButton, ToggleButtonGroup
+  Snackbar, Alert, ToggleButton, ToggleButtonGroup, Skeleton, CircularProgress
 } from '@mui/material';
 import { 
   Search as SearchIcon, Add as AddIcon, Edit as EditIcon, 
@@ -14,6 +16,10 @@ import {
 } from '@mui/icons-material';
 import SearchableSelect from '../../components/Common/SearchableSelect';
 import DataTable from '../../components/Common/DataTable';
+import { useCascadingDropdowns } from '../../hooks/useCascadingDropdowns';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
 
 const FormRow = ({ label, children, alignTop = false, maxWidth = 320 }) => (
   <Stack direction="row" alignItems={alignTop ? "flex-start" : "center"} spacing={2}>
@@ -26,26 +32,222 @@ const FormRow = ({ label, children, alignTop = false, maxWidth = 320 }) => (
   </Stack>
 );
 
+
+
 const AddClientForm = ({ onCancel }) => {
+  const [division, setDivision] = useState('');
+  const [unit, setUnit] = useState('');
+  const [position, setPosition] = useState('');
+  const [employeeType, setEmployeeType] = useState('');
+  const [branch, setBranch] = useState('');
+  
+  const [salaryType, setSalaryType] = useState('');
+  const [nominal, setNominal] = useState('');
+  const [workDays, setWorkDays] = useState('');
+  const [bpjsTkType, setBpjsTkType] = useState('');
+  const [manajemenFee, setManajemenFee] = useState('0');
+  const [metodePajak, setMetodePajak] = useState('');
+  const [komponenProject, setKomponenProject] = useState('');
+  const [persenBpjsKesehatan, setPersenBpjsKesehatan] = useState('1');
+  const [bpjsKetenagakerjaan, setBpjsKetenagakerjaan] = useState('');
+  const [komponenUpah, setKomponenUpahVal] = useState('');
+  const [komponenLembur, setKomponenLembur] = useState('');
+  const [ditanggungOleh, setDitanggungOleh] = useState('');
+
   const [tunjanganTetap, setTunjanganTetap] = useState([]);
   const [tunjanganTidakTetap, setTunjanganTidakTetap] = useState([]);
+  const [tunjanganBedaPeriode, setTunjanganBedaPeriode] = useState(false);
+  const [tunjanganDetails, setTunjanganDetails] = useState({});
   const [activeTab, setActiveTab] = useState('tunjangan');
+  
+  const [biayaJasa, setBiayaJasa] = useState('');
+  const [training, setTraining] = useState('');
+  const [bonus, setBonus] = useState('');
+  const [asuransiKesehatan, setAsuransiKesehatan] = useState('');
+  const [asuransiKecelakaan, setAsuransiKecelakaan] = useState('');
+  const [insentif, setInsentif] = useState('');
+  const [lembur, setLembur] = useState('');
+  const [tunjanganKesehatan, setTunjanganKesehatan] = useState('');
+  const [performancePay, setPerformancePay] = useState('');
+  const [monthlyCommission, setMonthlyCommission] = useState('');
+  const [shiftAllowance, setShiftAllowance] = useState('');
+  const [thr, setThr] = useState('');
+  const [kompensasi, setKompensasi] = useState('');
 
-  const tunjanganOptions = [
-    'Tunjangan Supervisor', 'Tunjangan Jabatan', 'Skill Allowance',
-    'Grading Allowance', 'Montly Allowance', 'Performance Allowance',
-    'Position Allowance', 'Tunjangan Bensin'
-  ];
+  const [errors, setErrors] = useState({});
+  const [confirmDialog, setConfirmDialog] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'error' });
+  const [isDownloadingTemplate, setIsDownloadingTemplate] = useState(false);
+
+  const { 
+    divisions, units, positions, employeeTypes, branches,
+    salaryTypes, allowances, komponenUpah: komponenUpahOptions, workDays: workDaysOptions,
+    bpjsTkTypes, metodePajak: metodePajakOptions, komponenProject: komponenProjectOptions, 
+    bpjsKetenagakerjaan: bpjsKetOptions, ditanggungOleh: ditanggungOlehOptions
+  } = useDynamicClientDropdowns({ division, unit, position, employeeType });
 
   const allSelectedTunjangan = [...new Set([...tunjanganTetap, ...tunjanganTidakTetap])];
 
+  const formatCurrency = (val) => {
+    if (!val) return '';
+    const num = val.toString().replace(/[^0-9]/g, '');
+    if (!num) return '';
+    return Number(num).toLocaleString('en-US');
+  };
+
+  const handleCurrencyChange = (setter) => (e) => {
+    setter(formatCurrency(e.target.value));
+  };
+
+  const validateForm = () => {
+    let newErrors = {};
+    let isValid = true;
+    const errorMsg = (msg) => setSnackbar({ open: true, message: msg, severity: 'error' });
+
+    const mandatory = { division, unit, position, branch, employeeType, salaryType, metodePajak, komponenProject, workDays };
+    Object.keys(mandatory).forEach(key => {
+      if (!mandatory[key]) {
+        newErrors[key] = true;
+        isValid = false;
+      }
+    });
+
+    if (!isValid) {
+      setErrors(newErrors);
+      errorMsg('Harap isi semua komponen yang mandatory');
+      return false;
+    }
+
+    if (!persenBpjsKesehatan && !bpjsTkType) {
+      newErrors.persenBpjsKesehatan = true;
+      newErrors.bpjsTkType = true;
+      setErrors(newErrors);
+      errorMsg('Persen BPJS Kesehatan dan BPJS TK Type harus diisi');
+      return false;
+    }
+
+    if (bpjsTkType && bpjsTkType !== 'None' && !persenBpjsKesehatan) {
+      newErrors.persenBpjsKesehatan = true;
+      setErrors(newErrors);
+      errorMsg('Persen BPJS Kesehatan harus diisi');
+      return false;
+    }
+
+    if (bpjsKetenagakerjaan !== '0' && bpjsKetenagakerjaan !== 'No' && bpjsKetenagakerjaan && !bpjsTkType) {
+      newErrors.bpjsTkType = true;
+      setErrors(newErrors);
+      errorMsg('BPJS TK Type harus diisi');
+      return false;
+    }
+
+    if (asuransiKesehatan && (!ditanggungOleh || ditanggungOleh === '0')) {
+      newErrors.ditanggungOleh = true;
+      setErrors(newErrors);
+      errorMsg('Asuransi Ditanggung Oleh harus diisi');
+      return false;
+    }
+
+    if (asuransiKecelakaan && (!ditanggungOleh || ditanggungOleh === '0')) {
+      newErrors.ditanggungOleh = true;
+      setErrors(newErrors);
+      errorMsg('Asuransi Ditanggung Oleh harus diisi');
+      return false;
+    }
+
+    if ((bpjsKetenagakerjaan === '1' || bpjsKetenagakerjaan === 'Yes') && !komponenUpah) {
+      newErrors.komponenUpah = true;
+      setErrors(newErrors);
+      errorMsg('Komponen Upah harus dipilih terlebih dahulu');
+      return false;
+    }
+
+    if (bpjsTkType && bpjsTkType !== 'None' && (bpjsKetenagakerjaan === '0' || bpjsKetenagakerjaan === 'No' || !bpjsKetenagakerjaan)) {
+      newErrors.bpjsKetenagakerjaan = true;
+      setErrors(newErrors);
+      errorMsg('Bpjs Ketenagakerjaan harus dipilih');
+      return false;
+    }
+
+    setErrors({});
+    return true;
+  };
+
+  const handleSubmit = () => {
+    if (validateForm()) {
+      setConfirmDialog(true);
+    }
+  };
+
+  const proceedSave = async () => {
+    setConfirmDialog(false);
+    try {
+      const payload = {
+         division, unitName: unit, position, branch, employeeType,
+         salaryType, nominal: parseFloat(nominal.replace(/,/g, '') || 0),
+         workDays, bpjsTkType, manajemenFee: parseFloat(manajemenFee.replace(/,/g, '') || 0),
+         metodePajak, komponenProject, persenBpjsKesehatan, bpjsKetenagakerjaan,
+         komponenUpah, komponenLembur, biayaJasa: parseFloat(biayaJasa.replace(/,/g, '') || 0),
+         training: parseFloat(training.replace(/,/g, '') || 0), bonus: parseFloat(bonus.replace(/,/g, '') || 0),
+         tunjanganTetap, tunjanganTidakTetap, tunjanganBedaPeriode, ditanggungOleh, tunjanganDetails: JSON.stringify(tunjanganDetails),
+         asuransiKesehatan: parseFloat(asuransiKesehatan.replace(/,/g, '') || 0),
+         asuransiKecelakaan: parseFloat(asuransiKecelakaan.replace(/,/g, '') || 0),
+         insentif: parseFloat(insentif.replace(/,/g, '') || 0), lembur: parseFloat(lembur.replace(/,/g, '') || 0),
+         tunjanganKesehatan: parseFloat(tunjanganKesehatan.replace(/,/g, '') || 0),
+         performancePay: parseFloat(performancePay.replace(/,/g, '') || 0),
+         monthlyCommission: parseFloat(monthlyCommission.replace(/,/g, '') || 0),
+         shiftAllowance: parseFloat(shiftAllowance.replace(/,/g, '') || 0),
+         thr: parseFloat(thr.replace(/,/g, '') || 0), kompensasi: parseFloat(kompensasi.replace(/,/g, '') || 0)
+      };
+      
+      const userFullname = localStorage.getItem('fullname') || 'Staff HRD';
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_URL}/api/master-client/add`, payload, {
+        headers: { 
+          'fullname': userFullname,
+          'Authorization': `Bearer ${token}` 
+        }
+      });
+      
+      setSnackbar({ open: true, message: 'Data berhasil disimpan!', severity: 'success' });
+      setTimeout(() => {
+        onCancel(true);
+      }, 1500);
+    } catch (err) {
+       const msg = err.response?.data || err.message;
+       setSnackbar({ open: true, message: msg, severity: 'error' });
+    }
+  };
+
+  const getErrorStyle = (field) => errors[field] ? { border: '1px solid red', borderRadius: 1 } : {};
+
   return (
     <Box>
+      <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={() => setSnackbar({...snackbar, open: false})} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+        <Alert onClose={() => setSnackbar({...snackbar, open: false})} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+
+      <Dialog open={confirmDialog} onClose={() => setConfirmDialog(false)}>
+        <DialogTitle>Konfirmasi Penyimpanan</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Apakah Anda yakin ingin menyimpan data Master Client ini?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmDialog(false)} color="inherit">Batal</Button>
+          <Button onClick={proceedSave} variant="contained" color="primary" autoFocus>
+            Ya, Simpan
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
         <Button
           variant="outlined"
           startIcon={<ArrowBackIcon />}
-          onClick={onCancel}
+          onClick={() => onCancel()}
           sx={{ borderRadius: '8px', fontWeight: 700, textTransform: 'none', borderColor: '#3b82f6', color: '#3b82f6' }}
         >
           Kembali
@@ -61,26 +263,24 @@ const AddClientForm = ({ onCancel }) => {
         {/* DATA CLIENT SECTION */}
         <Typography sx={{ fontWeight: 700, color: '#1e293b', borderBottom: '2px solid #e2e8f0', pb: 1, mb: 3 }}>Data Client</Typography>
         <Grid container spacing={6}>
-          {/* Left Column */}
           <Grid item xs={12} md={6}>
             <Stack spacing={2.5}>
-              <FormRow label="Division"><SearchableSelect placeholder="--Pilih--" options={[]} /></FormRow>
-              <FormRow label="Unit Name"><SearchableSelect placeholder="--Pilih--" options={[]} /></FormRow>
-              <FormRow label="Position"><SearchableSelect placeholder="--Pilih--" options={[]} /></FormRow>
-              <FormRow label="Employee Type"><SearchableSelect placeholder="--Pilih--" options={[]} /></FormRow>
-              <FormRow label="Branch"><SearchableSelect placeholder="--Pilih--" options={[]} /></FormRow>
-              <FormRow label="Salary Type"><SearchableSelect placeholder="--Pilih--" options={[]} /></FormRow>
-              <FormRow label="Nominal"><TextField fullWidth size="small" /></FormRow>
+              <FormRow label="Division"><Box sx={getErrorStyle('division')}><SearchableSelect freeSolo={true} placeholder="--Pilih--" options={divisions} value={division} onChange={val => { setDivision(val); setUnit(''); setPosition(''); setEmployeeType(''); setBranch(''); }} /></Box></FormRow>
+              <FormRow label="Unit Name"><Box sx={getErrorStyle('unit')}><SearchableSelect freeSolo={true} placeholder="--Pilih--" options={units} value={unit} onChange={val => { setUnit(val); setPosition(''); setEmployeeType(''); setBranch(''); }} /></Box></FormRow>
+              <FormRow label="Position"><Box sx={getErrorStyle('position')}><SearchableSelect freeSolo={true} placeholder="--Pilih--" options={positions} value={position} onChange={val => { setPosition(val); setEmployeeType(''); setBranch(''); }} /></Box></FormRow>
+              <FormRow label="Employee Type"><Box sx={getErrorStyle('employeeType')}><SearchableSelect freeSolo={true} placeholder="--Pilih--" options={employeeTypes} value={employeeType} onChange={val => { setEmployeeType(val); setBranch(''); }} /></Box></FormRow>
+              <FormRow label="Branch"><Box sx={getErrorStyle('branch')}><SearchableSelect freeSolo={true} placeholder="--Pilih--" options={branches} value={branch} onChange={val => setBranch(val)} /></Box></FormRow>
+              <FormRow label="Salary Type"><Box sx={getErrorStyle('salaryType')}><SearchableSelect freeSolo={true} placeholder="--Pilih--" options={salaryTypes} value={salaryType} onChange={val => setSalaryType(val)} /></Box></FormRow>
+              <FormRow label="Nominal"><TextField fullWidth size="small" value={nominal} onChange={handleCurrencyChange(setNominal)} /></FormRow>
             </Stack>
           </Grid>
-          {/* Right Column */}
           <Grid item xs={12} md={6}>
             <Stack spacing={2.5}>
-              <FormRow label="Works Days"><SearchableSelect placeholder="--Pilih--" options={[]} /></FormRow>
-              <FormRow label="BPJS TK Type"><SearchableSelect placeholder="--Pilih--" options={[]} /></FormRow>
-              <FormRow label="Manajemen Fee (%)"><TextField fullWidth size="small" defaultValue="0" /></FormRow>
-              <FormRow label="Metode Pajak"><SearchableSelect placeholder="--Pilih--" options={[]} /></FormRow>
-              <FormRow label="Komponen Project"><SearchableSelect placeholder="--Pilih--" options={[]} /></FormRow>
+              <FormRow label="Works Days"><Box sx={getErrorStyle('workDays')}><SearchableSelect placeholder="--Pilih--" options={workDaysOptions} value={workDays} onChange={val => setWorkDays(val)} /></Box></FormRow>
+              <FormRow label="BPJS TK Type"><Box sx={getErrorStyle('bpjsTkType')}><SearchableSelect placeholder="--Pilih--" options={bpjsTkTypes} value={bpjsTkType} onChange={val => setBpjsTkType(val)} /></Box></FormRow>
+              <FormRow label="Manajemen Fee (%)"><TextField fullWidth size="small" value={manajemenFee} onChange={(e) => setManajemenFee(e.target.value.replace(/[^0-9.]/g, ''))} /></FormRow>
+              <FormRow label="Metode Pajak"><Box sx={getErrorStyle('metodePajak')}><SearchableSelect placeholder="--Pilih--" options={metodePajakOptions} value={metodePajak} onChange={val => setMetodePajak(val)} /></Box></FormRow>
+              <FormRow label="Komponen Project"><Box sx={getErrorStyle('komponenProject')}><SearchableSelect placeholder="--Pilih--" options={komponenProjectOptions} value={komponenProject} onChange={val => setKomponenProject(val)} /></Box></FormRow>
             </Stack>
           </Grid>
         </Grid>
@@ -91,21 +291,23 @@ const AddClientForm = ({ onCancel }) => {
           <Grid item xs={12} md={6}>
             <Stack spacing={2.5}>
               <FormRow label="Persen BPJS Kesehatan" alignTop>
-                <FormControl component="fieldset">
-                  <RadioGroup defaultValue="1">
-                    <FormControlLabel value="1" control={<Radio size="small" />} label={<Typography variant="body2">Perusahaan 5%</Typography>} sx={{ mb: -1 }} />
-                    <FormControlLabel value="2" control={<Radio size="small" />} label={<Typography variant="body2">Perusahaan 4% dan Karyawan 1%</Typography>} sx={{ mb: -1 }} />
-                    <FormControlLabel value="3" control={<Radio size="small" />} label={<Typography variant="body2">Karyawan 5%</Typography>} />
-                  </RadioGroup>
-                </FormControl>
+                <Box sx={getErrorStyle('persenBpjsKesehatan')}>
+                  <FormControl component="fieldset">
+                    <RadioGroup value={persenBpjsKesehatan} onChange={(e) => setPersenBpjsKesehatan(e.target.value)}>
+                      <FormControlLabel value="1" control={<Radio size="small" />} label={<Typography variant="body2">Perusahaan 5%</Typography>} sx={{ mb: -1 }} />
+                      <FormControlLabel value="2" control={<Radio size="small" />} label={<Typography variant="body2">Perusahaan 4% dan Karyawan 1%</Typography>} sx={{ mb: -1 }} />
+                      <FormControlLabel value="3" control={<Radio size="small" />} label={<Typography variant="body2">Karyawan 5%</Typography>} />
+                    </RadioGroup>
+                  </FormControl>
+                </Box>
               </FormRow>
-              <FormRow label="BPJS Ketenagakerjaan"><SearchableSelect placeholder="--Pilih--" options={[]} /></FormRow>
+              <FormRow label="BPJS Ketenagakerjaan"><Box sx={getErrorStyle('bpjsKetenagakerjaan')}><SearchableSelect placeholder="--Pilih--" options={bpjsKetOptions} value={bpjsKetenagakerjaan} onChange={val => setBpjsKetenagakerjaan(val)} /></Box></FormRow>
             </Stack>
           </Grid>
           <Grid item xs={12} md={6}>
             <Stack spacing={2.5}>
-              <FormRow label="Komponen Upah"><SearchableSelect placeholder="--Pilih--" options={[]} /></FormRow>
-              <FormRow label="Komponen Lembur"><SearchableSelect placeholder="--Pilih--" options={[]} /></FormRow>
+              <FormRow label="Komponen Upah"><Box sx={getErrorStyle('komponenUpah')}><SearchableSelect placeholder="--Pilih--" options={komponenUpahOptions} value={komponenUpah} onChange={val => setKomponenUpahVal(val)} /></Box></FormRow>
+              <FormRow label="Komponen Lembur"><SearchableSelect placeholder="--Pilih--" options={komponenUpahOptions} value={komponenLembur} onChange={val => setKomponenLembur(val)} /></FormRow>
             </Stack>
           </Grid>
         </Grid>
@@ -115,9 +317,9 @@ const AddClientForm = ({ onCancel }) => {
           <Grid item xs={12} md={6}>
             <Typography sx={{ fontWeight: 700, color: '#1e293b', borderBottom: '2px solid #e2e8f0', pb: 1, mb: 3, mt: 5 }}>Special Treatment</Typography>
             <Stack spacing={2.5}>
-              <FormRow label="Biaya Jasa"><TextField fullWidth size="small" /></FormRow>
-              <FormRow label="Training"><TextField fullWidth size="small" /></FormRow>
-              <FormRow label="Bonus"><TextField fullWidth size="small" /></FormRow>
+              <FormRow label="Biaya Jasa"><TextField fullWidth size="small" value={biayaJasa} onChange={handleCurrencyChange(setBiayaJasa)} /></FormRow>
+              <FormRow label="Training"><TextField fullWidth size="small" value={training} onChange={handleCurrencyChange(setTraining)} /></FormRow>
+              <FormRow label="Bonus"><TextField fullWidth size="small" value={bonus} onChange={handleCurrencyChange(setBonus)} /></FormRow>
             </Stack>
           </Grid>
           <Grid item xs={12} md={6}>
@@ -126,7 +328,7 @@ const AddClientForm = ({ onCancel }) => {
               <FormRow label="Tunjangan Tetap">
                 <SearchableSelect 
                   placeholder="--Pilih--" 
-                  options={tunjanganOptions} 
+                  options={allowances} 
                   multiple={true}
                   value={tunjanganTetap}
                   onChange={(val) => setTunjanganTetap(val)}
@@ -135,14 +337,14 @@ const AddClientForm = ({ onCancel }) => {
               <FormRow label="Tunjangan Tidak Tetap">
                 <SearchableSelect 
                   placeholder="--Pilih--" 
-                  options={tunjanganOptions} 
+                  options={allowances} 
                   multiple={true}
                   value={tunjanganTidakTetap}
                   onChange={(val) => setTunjanganTidakTetap(val)}
                 />
               </FormRow>
               <FormRow label="">
-                <FormControlLabel control={<Checkbox size="small" />} label={<Typography variant="body2" color="text.secondary" fontWeight={600}>Tunjangan Beda Periode</Typography>} />
+                <FormControlLabel control={<Checkbox size="small" checked={tunjanganBedaPeriode} onChange={(e) => setTunjanganBedaPeriode(e.target.checked)} />} label={<Typography variant="body2" color="text.secondary" fontWeight={600}>Tunjangan Beda Periode</Typography>} />
               </FormRow>
             </Stack>
           </Grid>
@@ -153,13 +355,13 @@ const AddClientForm = ({ onCancel }) => {
           <Grid item xs={12} md={6}>
             <Typography sx={{ fontWeight: 700, color: '#1e293b', borderBottom: '2px solid #e2e8f0', pb: 1, mb: 3, mt: 5 }}>Asuransi</Typography>
             <Stack spacing={2.5}>
-              <FormRow label="Ditanggung oleh"><SearchableSelect placeholder="--Pilih--" options={[]} /></FormRow>
-              <FormRow label="Asuransi Kesehatan"><TextField fullWidth size="small" /></FormRow>
-              <FormRow label="Asuransi Kecelakaan"><TextField fullWidth size="small" /></FormRow>
+              <FormRow label="Ditanggung oleh"><Box sx={getErrorStyle('ditanggungOleh')}><SearchableSelect placeholder="--Pilih--" options={ditanggungOlehOptions} value={ditanggungOleh} onChange={val => setDitanggungOleh(val)} /></Box></FormRow>
+              <FormRow label="Asuransi Kesehatan"><TextField fullWidth size="small" value={asuransiKesehatan} onChange={handleCurrencyChange(setAsuransiKesehatan)} /></FormRow>
+              <FormRow label="Asuransi Kecelakaan"><TextField fullWidth size="small" value={asuransiKecelakaan} onChange={handleCurrencyChange(setAsuransiKecelakaan)} /></FormRow>
             </Stack>
           </Grid>
           <Grid item xs={12} md={6} sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
-             <Button variant="contained" sx={{ bgcolor: '#3b82f6', color: 'white', '&:hover': { bgcolor: '#2563eb' }, px: 6, py: 1.5, fontWeight: 700, borderRadius: '8px', minWidth: 160 }}>
+             <Button variant="contained" onClick={handleSubmit} sx={{ bgcolor: '#3b82f6', color: 'white', '&:hover': { bgcolor: '#2563eb' }, px: 6, py: 1.5, fontWeight: 700, borderRadius: '8px', minWidth: 160 }}>
                SAVE DATA
              </Button>
           </Grid>
@@ -195,7 +397,7 @@ const AddClientForm = ({ onCancel }) => {
                  <Stack spacing={2.5}>
                    {allSelectedTunjangan.map((t) => (
                      <FormRow key={t} label={t}>
-                       <TextField fullWidth size="small" placeholder={`Nominal ${t}`} />
+                       <TextField fullWidth size="small" placeholder={`Nominal ${t}`} value={tunjanganDetails[t] || ''} onChange={(e) => { const val = e.target.value; setTunjanganDetails(prev => ({...prev, [t]: val})); }} />
                      </FormRow>
                    ))}
                  </Stack>
@@ -210,18 +412,18 @@ const AddClientForm = ({ onCancel }) => {
                <Grid container spacing={6}>
                  <Grid item xs={12} md={6}>
                    <Stack spacing={2.5}>
-                     <FormRow label="Insentif"><TextField fullWidth size="small" /></FormRow>
-                     <FormRow label="Lembur"><TextField fullWidth size="small" /></FormRow>
-                     <FormRow label="Tunjangan Kesehatan"><TextField fullWidth size="small" /></FormRow>
-                     <FormRow label="Performance Pay"><TextField fullWidth size="small" /></FormRow>
+                     <FormRow label="Insentif"><TextField fullWidth size="small" value={insentif} onChange={handleCurrencyChange(setInsentif)} /></FormRow>
+                     <FormRow label="Lembur"><TextField fullWidth size="small" value={lembur} onChange={handleCurrencyChange(setLembur)} /></FormRow>
+                     <FormRow label="Tunjangan Kesehatan"><TextField fullWidth size="small" value={tunjanganKesehatan} onChange={handleCurrencyChange(setTunjanganKesehatan)} /></FormRow>
+                     <FormRow label="Performance Pay"><TextField fullWidth size="small" value={performancePay} onChange={handleCurrencyChange(setPerformancePay)} /></FormRow>
                    </Stack>
                  </Grid>
                  <Grid item xs={12} md={6}>
                    <Stack spacing={2.5}>
-                     <FormRow label="Monthly Commision"><TextField fullWidth size="small" /></FormRow>
-                     <FormRow label="Shift Allowance"><TextField fullWidth size="small" /></FormRow>
-                     <FormRow label="THR"><TextField fullWidth size="small" /></FormRow>
-                     <FormRow label="Kompensasi"><TextField fullWidth size="small" /></FormRow>
+                     <FormRow label="Monthly Commision"><TextField fullWidth size="small" value={monthlyCommission} onChange={handleCurrencyChange(setMonthlyCommission)} /></FormRow>
+                     <FormRow label="Shift Allowance"><TextField fullWidth size="small" value={shiftAllowance} onChange={handleCurrencyChange(setShiftAllowance)} /></FormRow>
+                     <FormRow label="THR"><TextField fullWidth size="small" value={thr} onChange={handleCurrencyChange(setThr)} /></FormRow>
+                     <FormRow label="Kompensasi"><TextField fullWidth size="small" value={kompensasi} onChange={handleCurrencyChange(setKompensasi)} /></FormRow>
                    </Stack>
                  </Grid>
                </Grid>
@@ -234,9 +436,111 @@ const AddClientForm = ({ onCancel }) => {
 };
 
 const EditClientForm = ({ onCancel, data }) => {
-  const [tunjanganTetap, setTunjanganTetap] = useState(['Tunjangan Supervisor', 'Tunjangan Jabatan']);
+  const [loading, setLoading] = useState(true);
+  const [detailData, setDetailData] = useState(null);
+
+  const [division, setDivision] = useState('');
+  const [unit, setUnit] = useState('');
+  const [position, setPosition] = useState('');
+  const [employeeType, setEmployeeType] = useState('');
+  const [branch, setBranch] = useState('');
+  
+  const [salaryType, setSalaryType] = useState('');
+  const [nominal, setNominal] = useState('');
+  const [workDays, setWorkDays] = useState('');
+  const [bpjsTkType, setBpjsTkType] = useState('');
+  const [manajemenFee, setManajemenFee] = useState('');
+  const [metodePajak, setMetodePajak] = useState('');
+  const [komponenProject, setKomponenProject] = useState('');
+  const [persenBpjsKesehatan, setPersenBpjsKesehatan] = useState('');
+  const [bpjsKetenagakerjaan, setBpjsKetenagakerjaan] = useState('');
+  const [komponenUpah, setKomponenUpahVal] = useState('');
+  const [komponenLembur, setKomponenLembur] = useState('');
+  const [ditanggungOleh, setDitanggungOleh] = useState('');
+  
+  const [asuransiKesehatan, setAsuransiKesehatan] = useState('');
+  const [asuransiKecelakaan, setAsuransiKecelakaan] = useState('');
+  
+  const [insentif, setInsentif] = useState('');
+  const [lembur, setLembur] = useState('');
+  const [tunjanganKesehatan, setTunjanganKesehatan] = useState('');
+  const [performancePay, setPerformancePay] = useState('');
+  const [monthlyCommission, setMonthlyCommission] = useState('');
+  const [shiftAllowance, setShiftAllowance] = useState('');
+  const [thr, setThr] = useState('');
+  const [kompensasi, setKompensasi] = useState('');
+
+  const [tunjanganTetap, setTunjanganTetap] = useState([]);
   const [tunjanganTidakTetap, setTunjanganTidakTetap] = useState([]);
+  const [tunjanganBedaPeriode, setTunjanganBedaPeriode] = useState(false);
+  const [tunjanganDetails, setTunjanganDetails] = useState({});
   const [activeTab, setActiveTab] = useState('tunjangan');
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'error' });
+  const { user } = useSelector((state) => state.auth || {});
+
+  const { 
+    divisions, units, positions, employeeTypes, branches,
+    salaryTypes, allowances, komponenUpah: komponenUpahOptions, workDays: workDaysOptions,
+    bpjsTkTypes, metodePajak: metodePajakOptions, komponenProject: komponenProjectOptions, 
+    bpjsKetenagakerjaan: bpjsKetOptions, ditanggungOleh: ditanggungOlehOptions
+  } = useDynamicClientDropdowns({ division, unit, position, employeeType });
+
+  const fetchDetail = async () => {
+    if (!data?.id) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_URL}/api/master-client/${data.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data) {
+        const d = res.data;
+        setDetailData(d);
+        setDivision(d.division || '');
+        setUnit(d.unitName || '');
+        setPosition(d.position || '');
+        setEmployeeType(d.employeeType || '');
+        setBranch(d.branch || '');
+        setSalaryType(d.salaryType || '');
+        setNominal(d.nominal || '');
+        setWorkDays(d.workDays || '');
+        setBpjsTkType(d.bpjsTkType || '');
+        setManajemenFee(d.manajemenFee || '');
+        setMetodePajak(d.metodePajak || '');
+        setKomponenProject(d.komponenProject || '');
+        setPersenBpjsKesehatan(d.persenBpjsKesehatan || '');
+        setBpjsKetenagakerjaan(d.bpjsKetenagakerjaan || '');
+        setKomponenUpahVal(d.komponenUpah || '');
+        setKomponenLembur(d.komponenLembur || '');
+        setDitanggungOleh(d.ditanggungOleh || '');
+        setAsuransiKesehatan(d.asuransiKesehatan || '');
+        setAsuransiKecelakaan(d.asuransiKecelakaan || '');
+        
+        setInsentif(d.insentif || '');
+        setLembur(d.lembur || '');
+        setTunjanganKesehatan(d.tunjanganKesehatan || '');
+        setPerformancePay(d.performancePay || '');
+        setMonthlyCommission(d.monthlyCommission || '');
+        setShiftAllowance(d.shiftAllowance || '');
+        setThr(d.thr || '');
+        setKompensasi(d.kompensasi || '');
+        
+        if (d.tunjanganBedaPeriode != null) setTunjanganBedaPeriode(d.tunjanganBedaPeriode);
+        if (d.tunjanganDetails) { try { setTunjanganDetails(JSON.parse(d.tunjanganDetails)); } catch(e) {} }
+        if (d.tunjanganTetap) setTunjanganTetap(d.tunjanganTetap.split(','));
+        else setTunjanganTetap([]);
+        if (d.tunjanganTidakTetap) setTunjanganTidakTetap(d.tunjanganTidakTetap.split(','));
+        else setTunjanganTidakTetap([]);
+      }
+    } catch (error) {
+      console.error('Error fetching detail:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDetail();
+  }, [data]);
 
   const tunjanganOptions = [
     'Tunjangan Supervisor', 'Tunjangan Jabatan', 'Skill Allowance',
@@ -245,6 +549,81 @@ const EditClientForm = ({ onCancel, data }) => {
   ];
 
   const allSelectedTunjangan = [...new Set([...tunjanganTetap, ...tunjanganTidakTetap])];
+
+  const handleUpdateData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const payload = {
+        division, unitName: unit, position, employeeType, branch,
+        salaryType, nominal: parseFloat(String(nominal).replace(/,/g, '')) || null, workDays,
+        bpjsTkType, manajemenFee: parseFloat(String(manajemenFee).replace(/,/g, '')) || null,
+        metodePajak, komponenProject, 
+        persenBpjsKesehatan, bpjsKetenagakerjaan, komponenUpah, komponenLembur,
+        ditanggungOleh,
+        asuransiKesehatan: parseFloat(String(asuransiKesehatan).replace(/,/g, '')) || null,
+        asuransiKecelakaan: parseFloat(String(asuransiKecelakaan).replace(/,/g, '')) || null,
+        insentif: parseFloat(String(insentif).replace(/,/g, '')) || null,
+        lembur: parseFloat(String(lembur).replace(/,/g, '')) || null,
+        tunjanganKesehatan: parseFloat(String(tunjanganKesehatan).replace(/,/g, '')) || null,
+        performancePay: parseFloat(String(performancePay).replace(/,/g, '')) || null,
+        monthlyCommission: parseFloat(String(monthlyCommission).replace(/,/g, '')) || null,
+        shiftAllowance: parseFloat(String(shiftAllowance).replace(/,/g, '')) || null,
+        thr: parseFloat(String(thr).replace(/,/g, '')) || null,
+        kompensasi: parseFloat(String(kompensasi).replace(/,/g, '')) || null,
+        tunjanganTetap, tunjanganTidakTetap, tunjanganBedaPeriode,
+        tunjanganDetails: JSON.stringify(tunjanganDetails)
+      };
+
+      await axios.put(`${API_URL}/api/master-client/${data.id}`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSnackbar({ open: true, message: 'Data updated successfully', severity: 'success' });
+      setTimeout(() => {
+        onCancel();
+      }, 1500);
+    } catch (error) {
+      console.error('Error updating data:', error);
+      setSnackbar({ open: true, message: 'Failed to update data', severity: 'error' });
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ p: 4 }}>
+        <Stack spacing={3}>
+          <Box>
+            <Skeleton variant="text" width={200} height={40} />
+            <Skeleton variant="text" width={300} />
+          </Box>
+          <Paper sx={{ p: 4, borderRadius: 4, border: '1px solid #e2e8f0' }} elevation={0}>
+            <Skeleton variant="text" width={150} height={30} sx={{ mb: 3 }} />
+            <Grid container spacing={6}>
+              <Grid item xs={12} md={6}>
+                <Stack spacing={2.5}>
+                  {[...Array(6)].map((_, i) => (
+                    <Stack direction="row" spacing={2} key={i}>
+                      <Skeleton variant="text" width={120} />
+                      <Skeleton variant="rectangular" width="100%" height={40} sx={{ borderRadius: 1 }} />
+                    </Stack>
+                  ))}
+                </Stack>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Stack spacing={2.5}>
+                  {[...Array(6)].map((_, i) => (
+                    <Stack direction="row" spacing={2} key={i}>
+                      <Skeleton variant="text" width={120} />
+                      <Skeleton variant="rectangular" width="100%" height={40} sx={{ borderRadius: 1 }} />
+                    </Stack>
+                  ))}
+                </Stack>
+              </Grid>
+            </Grid>
+          </Paper>
+        </Stack>
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -271,23 +650,23 @@ const EditClientForm = ({ onCancel, data }) => {
           {/* Left Column */}
           <Grid item xs={12} md={6}>
             <Stack spacing={2.5}>
-              <FormRow label="Division"><SearchableSelect placeholder="--Pilih--" options={[]} value={data?.division} /></FormRow>
-              <FormRow label="Unit Name"><SearchableSelect placeholder="--Pilih--" options={[]} value={data?.unit} /></FormRow>
-              <FormRow label="Position"><SearchableSelect placeholder="--Pilih--" options={[]} value={data?.position} /></FormRow>
-              <FormRow label="Employee Type"><SearchableSelect placeholder="--Pilih--" options={[]} value={data?.employeeType} /></FormRow>
-              <FormRow label="Branch"><SearchableSelect placeholder="--Pilih--" options={[]} value={data?.branch} /></FormRow>
-              <FormRow label="Salary Type"><SearchableSelect placeholder="--Pilih--" options={['Variable', 'Fix']} value="Variable" /></FormRow>
-              <FormRow label="Nominal"><TextField fullWidth size="small" defaultValue="2,324,776" /></FormRow>
+              <FormRow label="Division"><TextField fullWidth size="small" value={division} onChange={e => setDivision(e.target.value)} /></FormRow>
+              <FormRow label="Unit Name"><TextField fullWidth size="small" value={unit} onChange={e => setUnit(e.target.value)} /></FormRow>
+              <FormRow label="Position"><TextField fullWidth size="small" value={position} onChange={e => setPosition(e.target.value)} /></FormRow>
+              <FormRow label="Employee Type"><TextField fullWidth size="small" value={employeeType} onChange={e => setEmployeeType(e.target.value)} /></FormRow>
+              <FormRow label="Branch"><TextField fullWidth size="small" value={branch} onChange={e => setBranch(e.target.value)} /></FormRow>
+              <FormRow label="Salary Type"><TextField fullWidth size="small" value={salaryType} onChange={e => setSalaryType(e.target.value)} /></FormRow>
+              <FormRow label="Nominal"><TextField fullWidth size="small" value={nominal} onChange={e => setNominal(e.target.value)} /></FormRow>
             </Stack>
           </Grid>
           {/* Right Column */}
           <Grid item xs={12} md={6}>
             <Stack spacing={2.5}>
-              <FormRow label="Works Days"><SearchableSelect placeholder="--Pilih--" options={['5+2', '6+1']} value="5+2" /></FormRow>
-              <FormRow label="BPJS TK Type"><SearchableSelect placeholder="--Pilih--" options={['Variable', 'Fix']} value="Variable" /></FormRow>
-              <FormRow label="Manajemen Fee (%)"><TextField fullWidth size="small" defaultValue="2.5" /></FormRow>
-              <FormRow label="Metode Pajak"><SearchableSelect placeholder="--Pilih--" options={['Gross', 'Net']} value="Net" /></FormRow>
-              <FormRow label="Komponen Project"><SearchableSelect placeholder="--Pilih--" options={['Gross', 'Net']} value="Gross" /></FormRow>
+              <FormRow label="Works Days"><TextField fullWidth size="small" value={workDays} onChange={e => setWorkDays(e.target.value)} /></FormRow>
+              <FormRow label="BPJS TK Type"><TextField fullWidth size="small" value={bpjsTkType} onChange={e => setBpjsTkType(e.target.value)} /></FormRow>
+              <FormRow label="Manajemen Fee (%)"><TextField fullWidth size="small" value={manajemenFee} onChange={e => setManajemenFee(e.target.value)} /></FormRow>
+              <FormRow label="Metode Pajak"><TextField fullWidth size="small" value={metodePajak} onChange={e => setMetodePajak(e.target.value)} /></FormRow>
+              <FormRow label="Komponen Project"><TextField fullWidth size="small" value={komponenProject} onChange={e => setKomponenProject(e.target.value)} /></FormRow>
             </Stack>
           </Grid>
         </Grid>
@@ -298,58 +677,50 @@ const EditClientForm = ({ onCancel, data }) => {
           <Grid item xs={12} md={6}>
             <Stack spacing={2.5}>
               <FormRow label="Persen BPJS Kesehatan" alignTop>
-                <FormControl component="fieldset">
-                  <RadioGroup defaultValue="2">
-                    <FormControlLabel value="1" control={<Radio size="small" />} label={<Typography variant="body2">Perusahaan 5%</Typography>} sx={{ mb: -1 }} />
-                    <FormControlLabel value="2" control={<Radio size="small" />} label={<Typography variant="body2">Perusahaan 4% dan Karyawan 1%</Typography>} sx={{ mb: -1 }} />
-                    <FormControlLabel value="3" control={<Radio size="small" />} label={<Typography variant="body2">Karyawan 5%</Typography>} />
-                  </RadioGroup>
-                </FormControl>
+                <TextField fullWidth size="small" value={persenBpjsKesehatan} onChange={e => setPersenBpjsKesehatan(e.target.value)} />
               </FormRow>
-              <FormRow label="BPJS Ketenagakerjaan"><SearchableSelect placeholder="--Pilih--" options={['Yes', 'No']} value="Yes" /></FormRow>
+              <FormRow label="BPJS Ketenagakerjaan" alignTop>
+                <TextField fullWidth size="small" value={bpjsKetenagakerjaan} onChange={e => setBpjsKetenagakerjaan(e.target.value)} />
+              </FormRow>
             </Stack>
           </Grid>
           <Grid item xs={12} md={6}>
             <Stack spacing={2.5}>
-              <FormRow label="Komponen Upah"><SearchableSelect placeholder="--Pilih--" options={['Salary']} value="Salary" /></FormRow>
-              <FormRow label="Komponen Lembur"><SearchableSelect placeholder="--Pilih--" options={[]} /></FormRow>
+              <FormRow label="Komponen Upah"><TextField fullWidth size="small" value={komponenUpah} onChange={e => setKomponenUpahVal(e.target.value)} /></FormRow>
+              <FormRow label="Komponen Lembur"><TextField fullWidth size="small" value={komponenLembur} onChange={e => setKomponenLembur(e.target.value)} /></FormRow>
             </Stack>
           </Grid>
         </Grid>
 
-        {/* SPECIAL TREATMENT & KATEGORI TUNJANGAN SECTION */}
+        {/* KATEGORI TUNJANGAN SECTION */}
+        <Typography sx={{ fontWeight: 700, color: '#1e293b', borderBottom: '2px solid #e2e8f0', pb: 1, mb: 3, mt: 5 }}>Kategori Tunjangan</Typography>
         <Grid container spacing={6}>
           <Grid item xs={12} md={6}>
-            <Typography sx={{ fontWeight: 700, color: '#1e293b', borderBottom: '2px solid #e2e8f0', pb: 1, mb: 3, mt: 5 }}>Special Treatment</Typography>
             <Stack spacing={2.5}>
-              <FormRow label="Biaya Jasa"><TextField fullWidth size="small" /></FormRow>
-              <FormRow label="Training"><TextField fullWidth size="small" /></FormRow>
-              <FormRow label="Bonus"><TextField fullWidth size="small" /></FormRow>
+              <FormRow label="Tunjangan Tetap" alignTop>
+                <SearchableSelect 
+                  placeholder="--Pilih Tunjangan--"
+                  options={allowances && allowances.length > 0 ? allowances : tunjanganOptions}
+                  value={tunjanganTetap}
+                  onChange={setTunjanganTetap}
+                  multiple
+                />
+              </FormRow>
             </Stack>
           </Grid>
           <Grid item xs={12} md={6}>
-            <Typography sx={{ fontWeight: 700, color: '#1e293b', borderBottom: '2px solid #e2e8f0', pb: 1, mb: 3, mt: 5 }}>Kategori Tunjangan</Typography>
             <Stack spacing={2.5}>
-              <FormRow label="Tunjangan Tetap">
+              <FormRow label="Tunjangan Tidak Tetap" alignTop>
                 <SearchableSelect 
-                  placeholder="--Pilih--" 
-                  options={tunjanganOptions} 
-                  multiple={true}
-                  value={tunjanganTetap}
-                  onChange={(val) => setTunjanganTetap(val)}
-                />
-              </FormRow>
-              <FormRow label="Tunjangan Tidak Tetap">
-                <SearchableSelect 
-                  placeholder="--Pilih--" 
-                  options={tunjanganOptions} 
-                  multiple={true}
+                  placeholder="--Pilih Tunjangan--"
+                  options={allowances && allowances.length > 0 ? allowances : tunjanganOptions}
                   value={tunjanganTidakTetap}
-                  onChange={(val) => setTunjanganTidakTetap(val)}
+                  onChange={setTunjanganTidakTetap}
+                  multiple
                 />
               </FormRow>
               <FormRow label="">
-                <FormControlLabel control={<Checkbox size="small" />} label={<Typography variant="body2" color="text.secondary" fontWeight={600}>Tunjangan Beda Periode</Typography>} />
+                <FormControlLabel control={<Checkbox size="small" checked={tunjanganBedaPeriode} onChange={e => setTunjanganBedaPeriode(e.target.checked)} />} label={<Typography variant="body2" color="text.secondary" fontWeight={600}>Tunjangan Beda Periode</Typography>} />
               </FormRow>
             </Stack>
           </Grid>
@@ -360,16 +731,16 @@ const EditClientForm = ({ onCancel, data }) => {
           <Grid item xs={12} md={6}>
             <Typography sx={{ fontWeight: 700, color: '#1e293b', borderBottom: '2px solid #e2e8f0', pb: 1, mb: 3, mt: 5 }}>Asuransi</Typography>
             <Stack spacing={2.5}>
-              <FormRow label="Ditanggung oleh"><SearchableSelect placeholder="--Pilih--" options={[]} /></FormRow>
-              <FormRow label="Asuransi Kesehatan"><TextField fullWidth size="small" /></FormRow>
-              <FormRow label="Asuransi Kecelakaan"><TextField fullWidth size="small" /></FormRow>
+              <FormRow label="Ditanggung oleh"><TextField fullWidth size="small" value={ditanggungOleh} onChange={e => setDitanggungOleh(e.target.value)} /></FormRow>
+              <FormRow label="Asuransi Kesehatan"><TextField fullWidth size="small" value={asuransiKesehatan} onChange={e => setAsuransiKesehatan(e.target.value)} /></FormRow>
+              <FormRow label="Asuransi Kecelakaan"><TextField fullWidth size="small" value={asuransiKecelakaan} onChange={e => setAsuransiKecelakaan(e.target.value)} /></FormRow>
             </Stack>
           </Grid>
           <Grid item xs={12} md={6} sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: 2 }}>
              <Button variant="outlined" sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px', color: '#3b82f6', borderColor: '#3b82f6', px: 4 }}>
                DUPLIKAT
              </Button>
-             <Button variant="contained" sx={{ bgcolor: '#3b82f6', color: 'white', '&:hover': { bgcolor: '#2563eb' }, px: 6, py: 1.5, fontWeight: 700, borderRadius: '8px', minWidth: 160 }}>
+             <Button onClick={handleUpdateData} variant="contained" sx={{ bgcolor: '#3b82f6', color: 'white', '&:hover': { bgcolor: '#2563eb' }, px: 6, py: 1.5, fontWeight: 700, borderRadius: '8px', minWidth: 160 }}>
                UPDATE DATA
              </Button>
           </Grid>
@@ -405,7 +776,7 @@ const EditClientForm = ({ onCancel, data }) => {
                  <Stack spacing={2.5}>
                    {allSelectedTunjangan.map((t) => (
                      <FormRow key={t} label={t}>
-                       <TextField fullWidth size="small" defaultValue="1,000,000" />
+                       <TextField fullWidth size="small" value={tunjanganDetails[t] || ''} onChange={(e) => { const val = e.target.value; setTunjanganDetails(prev => ({...prev, [t]: val})); }} />
                      </FormRow>
                    ))}
                  </Stack>
@@ -420,18 +791,18 @@ const EditClientForm = ({ onCancel, data }) => {
                <Grid container spacing={6}>
                  <Grid item xs={12} md={6}>
                    <Stack spacing={2.5}>
-                     <FormRow label="Insentif"><TextField fullWidth size="small" defaultValue="0" /></FormRow>
-                     <FormRow label="Lembur"><TextField fullWidth size="small" defaultValue="0" /></FormRow>
-                     <FormRow label="Tunjangan Kesehatan"><TextField fullWidth size="small" defaultValue="0" /></FormRow>
-                     <FormRow label="Performance Pay"><TextField fullWidth size="small" defaultValue="0" /></FormRow>
+                     <FormRow label="Insentif"><TextField fullWidth size="small" value={insentif} onChange={e => setInsentif(e.target.value)} /></FormRow>
+                     <FormRow label="Lembur"><TextField fullWidth size="small" value={lembur} onChange={e => setLembur(e.target.value)} /></FormRow>
+                     <FormRow label="Tunjangan Kesehatan"><TextField fullWidth size="small" value={tunjanganKesehatan} onChange={e => setTunjanganKesehatan(e.target.value)} /></FormRow>
+                     <FormRow label="Performance Pay"><TextField fullWidth size="small" value={performancePay} onChange={e => setPerformancePay(e.target.value)} /></FormRow>
                    </Stack>
                  </Grid>
                  <Grid item xs={12} md={6}>
                    <Stack spacing={2.5}>
-                     <FormRow label="Monthly Commision"><TextField fullWidth size="small" defaultValue="0" /></FormRow>
-                     <FormRow label="Shift Allowance"><TextField fullWidth size="small" defaultValue="0" /></FormRow>
-                     <FormRow label="THR"><TextField fullWidth size="small" defaultValue="0" /></FormRow>
-                     <FormRow label="Kompensasi"><TextField fullWidth size="small" defaultValue="0" /></FormRow>
+                     <FormRow label="Monthly Commision"><TextField fullWidth size="small" value={monthlyCommission} onChange={e => setMonthlyCommission(e.target.value)} /></FormRow>
+                     <FormRow label="Shift Allowance"><TextField fullWidth size="small" value={shiftAllowance} onChange={e => setShiftAllowance(e.target.value)} /></FormRow>
+                     <FormRow label="THR"><TextField fullWidth size="small" value={thr} onChange={e => setThr(e.target.value)} /></FormRow>
+                     <FormRow label="Kompensasi"><TextField fullWidth size="small" value={kompensasi} onChange={e => setKompensasi(e.target.value)} /></FormRow>
                    </Stack>
                  </Grid>
                </Grid>
@@ -439,6 +810,12 @@ const EditClientForm = ({ onCancel, data }) => {
           </Box>
         </Box>
       </Paper>
+
+      <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar({ ...snackbar, open: false })} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: '100%', borderRadius: 2, boxShadow: 3 }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
@@ -446,12 +823,39 @@ const EditClientForm = ({ onCancel, data }) => {
 const UploadClientForm = ({ onCancel }) => {
   const [tunjanganTetap, setTunjanganTetap] = useState([]);
   const [tunjanganTidakTetap, setTunjanganTidakTetap] = useState([]);
+  const { allowances } = useDynamicClientDropdowns();
   
   const tunjanganOptions = [
     'Tunjangan Supervisor', 'Tunjangan Jabatan', 'Skill Allowance',
     'Grading Allowance', 'Montly Allowance', 'Performance Allowance',
     'Position Allowance', 'Tunjangan Bensin'
   ];
+
+  const handleDownloadTemplate = async () => {
+    try {
+      setIsDownloadingTemplate(true);
+      const token = localStorage.getItem('token');
+      const response = await axios({
+        url: `${API_URL}/api/master-client/download-template`,
+        method: 'GET',
+        responseType: 'blob',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'Template_Client.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+    } catch (error) {
+      console.error("Error downloading template", error);
+      showSnackbar('Gagal mengunduh template.', 'error');
+    } finally {
+      setIsDownloadingTemplate(false);
+    }
+  };
+
 
   return (
     <Box>
@@ -478,7 +882,7 @@ const UploadClientForm = ({ onCancel }) => {
           <FormRow label={<span>Tunjangan Tetap <span style={{color: 'red'}}>*</span></span>} maxWidth={400}>
             <SearchableSelect 
               placeholder="--Pilih--" 
-              options={tunjanganOptions} 
+              options={allowances && allowances.length > 0 ? allowances : tunjanganOptions} 
               multiple={true}
               value={tunjanganTetap}
               onChange={(val) => setTunjanganTetap(val)}
@@ -490,7 +894,7 @@ const UploadClientForm = ({ onCancel }) => {
               <Box sx={{ width: 400 }}>
                 <SearchableSelect 
                   placeholder="--Pilih--" 
-                  options={tunjanganOptions} 
+                  options={allowances && allowances.length > 0 ? allowances : tunjanganOptions} 
                   multiple={true}
                   value={tunjanganTidakTetap}
                   onChange={(val) => setTunjanganTidakTetap(val)}
@@ -551,8 +955,8 @@ const UploadClientForm = ({ onCancel }) => {
               <Button variant="contained" sx={{ bgcolor: '#f0f9ff', color: '#0369a1', boxShadow: 'none', border: '1px solid #bae6fd', '&:hover': { bgcolor: '#e0f2fe', boxShadow: 'none' }, textTransform: 'none', fontWeight: 600 }}>
                 Process
               </Button>
-              <Button variant="contained" sx={{ bgcolor: '#f0f9ff', color: '#0369a1', boxShadow: 'none', border: '1px solid #bae6fd', '&:hover': { bgcolor: '#e0f2fe', boxShadow: 'none' }, textTransform: 'none', fontWeight: 600 }}>
-                Download Template
+              <Button disabled={isDownloadingTemplate} onClick={handleDownloadTemplate} variant="contained" sx={{ bgcolor: '#f0f9ff', color: '#0369a1', boxShadow: 'none', border: '1px solid #bae6fd', '&:hover': { bgcolor: '#e0f2fe', boxShadow: 'none' }, textTransform: 'none', fontWeight: 600 }}>
+                {isDownloadingTemplate ? <CircularProgress size={24} sx={{ color: '#0369a1' }} /> : 'Download Template'}
               </Button>
             </Stack>
           </FormRow>
@@ -575,6 +979,95 @@ const UploadClientForm = ({ onCancel }) => {
 
 const UpdateClientForm = ({ onCancel, selectedIds, mockData }) => {
   const [selectedKategori, setSelectedKategori] = useState([]);
+  const [updateData, setUpdateData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isAwalTahun, setIsAwalTahun] = useState(false);
+  const [hasKaryawanBaru, setHasKaryawanBaru] = useState(false);
+
+  const [updateSalaryType, setUpdateSalaryType] = useState('');
+  const [updateWorkDay, setUpdateWorkDay] = useState('');
+  const [tunjanganTetap, setTunjanganTetap] = useState([]);
+  const [tunjanganTidakTetap, setTunjanganTidakTetap] = useState([]);
+  const [tunjanganBedaPeriode, setTunjanganBedaPeriode] = useState(false);
+  const [persenBpjsKesehatan, setPersenBpjsKesehatan] = useState('1');
+  const [bpjsKetenagakerjaan, setBpjsKetenagakerjaan] = useState('');
+  const [komponenUpah, setKomponenUpah] = useState([]);
+  const [bpjsTkType, setBpjsTkType] = useState('');
+  const [komponenLembur, setKomponenLembur] = useState([]);
+  const [ditanggungOleh, setDitanggungOleh] = useState('');
+  const [asuransiKesehatan, setAsuransiKesehatan] = useState('');
+  const [asuransiKecelakaan, setAsuransiKecelakaan] = useState('');
+  const [isDownloadingTemplate, setIsDownloadingTemplate] = useState(false);
+
+  const { allowances, bpjsKetenagakerjaan: bpjsKetOptions, ditanggungOleh: ditanggungOlehOptions, komponenUpah: komponenUpahOptions } = useDynamicClientDropdowns();
+
+  const handleUpdateSalaryTypeChange = (val) => {
+    setUpdateSalaryType(val);
+  };
+
+  const handleUpdateWorkDayChange = (val) => {
+    setUpdateWorkDay(val);
+  };
+
+  const handleDownloadTemplate = async () => {
+    try {
+      setIsDownloadingTemplate(true);
+      const token = localStorage.getItem('token');
+      const response = await axios({
+        url: `${API_URL}/api/master-client/download-template`,
+        method: 'GET',
+        responseType: 'blob',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'Template_Client.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+    } catch (error) {
+      console.error("Error downloading template", error);
+      alert('Gagal mengunduh template.');
+    } finally {
+      setIsDownloadingTemplate(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.post(`${API_URL}/api/master-client/update-preview`, selectedIds, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const fetchedData = res.data || [];
+        setUpdateData(fetchedData);
+        
+        // logic awal tahun & karyawan baru
+        const currentMonth = new Date().getMonth(); // 0 is January
+        const currentYear = new Date().getFullYear();
+        setIsAwalTahun(currentMonth === 0); // true if January
+        
+        // check if any fetched data has created_date in the current month & year
+        const isBaru = fetchedData.some(d => {
+           if (!d.created_date) return false;
+           const date = new Date(d.created_date);
+           return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+        });
+        setHasKaryawanBaru(isBaru);
+
+      } catch (err) {
+        console.error('Failed to fetch update preview', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (selectedIds && selectedIds.length > 0) {
+      fetchData();
+    }
+  }, [selectedIds]);
   
   const handleKategoriChange = (kategori) => {
     if (selectedKategori.includes(kategori)) {
@@ -584,21 +1077,27 @@ const UpdateClientForm = ({ onCancel, selectedIds, mockData }) => {
     }
   };
 
-  const kategoriList = [
-    'Salary Type', 'Work Day', 'Manajemen Fee', 'Komponen Project',
-    'Metode Pajak', 'Kategori Tunjangan', 'Kategori BPJS', 'Komponen Lembur',
+  let kategoriList = [
+    'Salary Type', 'Work Day', 'Manajemen Fee',
+    'Kategori Tunjangan', 'Kategori BPJS', 'Komponen Lembur',
     'Asuransi', 'Nominal Tunjangan'
   ];
 
-  const updateColumns = [
-    { field: 'division', label: 'Division', render: (row) => <Typography sx={{ fontSize: '0.85rem' }}>{row.division}</Typography> },
-    { field: 'unit', label: 'Unit Name', render: (row) => <Typography sx={{ fontSize: '0.85rem' }}>{row.unit}</Typography> },
-    { field: 'position', label: 'Position', render: (row) => <Typography sx={{ fontSize: '0.85rem' }}>{row.position}</Typography> },
-    { field: 'branch', label: 'Branch', render: (row) => <Typography sx={{ fontSize: '0.85rem' }}>{row.branch}</Typography> },
-    { field: 'employeeType', label: 'Employee Type', render: (row) => <Typography sx={{ fontSize: '0.85rem' }}>{row.employeeType}</Typography> },
-    { field: 'gajiPokok', label: 'Gaji Pokok', render: () => <Typography sx={{ fontSize: '0.85rem' }}>Rp.2,324,776</Typography> },
-    { field: 'manajemenFee', label: 'Manajemen Fee', render: () => <Typography sx={{ fontSize: '0.85rem' }}>2.5</Typography> }
-  ];
+  if (isAwalTahun && hasKaryawanBaru) {
+    kategoriList.splice(3, 0, 'Komponen Project', 'Metode Pajak');
+  }
+
+  const updateColumns = updateData.length > 0 
+    ? Object.keys(updateData[0])
+        .filter(key => key !== 'id' && key !== 'created_date')
+        .map(key => ({
+          field: key,
+          label: key,
+          render: (row) => <Typography sx={{ fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+              {row[key] !== null && row[key] !== undefined ? row[key].toString() : '-'}
+            </Typography>
+        }))
+    : [];
 
   return (
     <Box>
@@ -631,14 +1130,14 @@ const UpdateClientForm = ({ onCancel, selectedIds, mockData }) => {
           ))}
         </Stack>
         
-        <Box sx={{ mt: 4 }}>
+        <Box sx={{ mt: 4, overflowX: 'auto' }}>
           <DataTable 
             columns={updateColumns} 
-            data={mockData.filter(d => selectedIds.includes(d.id))} 
-            loading={false}
+            data={updateData} 
+            loading={loading}
             page={1}
-            pageSize={10}
-            totalElements={selectedIds.length}
+            pageSize={updateData.length > 0 ? updateData.length : 10}
+            totalElements={updateData.length}
             totalPages={1}
             onPageChange={() => {}}
             onPageSizeChange={() => {}}
@@ -659,10 +1158,10 @@ const UpdateClientForm = ({ onCancel, selectedIds, mockData }) => {
           )}
           
           {selectedKategori.includes('Salary Type') && (
-            <FormRow label="Salary Type" maxWidth={400}><SearchableSelect placeholder="--PILIH--" options={['Variable', 'Fix']} /></FormRow>
+            <FormRow label="Salary Type" maxWidth={400}><SearchableSelect placeholder="--PILIH--" options={['Variable', 'Fix', 'Daily', 'Allowance']} value={updateSalaryType} onChange={handleUpdateSalaryTypeChange} /></FormRow>
           )}
           {selectedKategori.includes('Work Day') && (
-            <FormRow label="Work Day" maxWidth={400}><SearchableSelect placeholder="--PILIH--" options={['5+2', '6+1']} /></FormRow>
+            <FormRow label="Work Day" maxWidth={400}><SearchableSelect placeholder="--PILIH--" options={['5+2', '6+1']} value={updateWorkDay} onChange={handleUpdateWorkDayChange} /></FormRow>
           )}
           {selectedKategori.includes('Manajemen Fee') && (
             <FormRow label="Manajemen Fee Dalam (%)" maxWidth={400}><TextField size="small" fullWidth defaultValue="0.0" /></FormRow>
@@ -674,19 +1173,107 @@ const UpdateClientForm = ({ onCancel, selectedIds, mockData }) => {
             <FormRow label="Metode Pajak" maxWidth={400}><SearchableSelect placeholder="--PILIH--" options={['Gross', 'Net']} /></FormRow>
           )}
           {selectedKategori.includes('Kategori Tunjangan') && (
-            <FormRow label="Kategori Tunjangan" maxWidth={400}><SearchableSelect placeholder="--PILIH--" options={['Tunjangan Supervisor', 'Tunjangan Jabatan']} /></FormRow>
+            <Box sx={{ mt: 3, mb: 3 }}>
+              <Typography sx={{ fontWeight: 700, color: '#1e293b', borderBottom: '1px solid #e2e8f0', pb: 1, mb: 2 }}>Kategori Tunjangan</Typography>
+              <Stack spacing={2.5}>
+                <FormRow label="Tunjangan Tetap" maxWidth={400}>
+                  <SearchableSelect placeholder="--Pilih--" options={allowances} multiple={true} value={tunjanganTetap} onChange={(val) => setTunjanganTetap(val)} />
+                </FormRow>
+                <FormRow label="Tunjangan Tidak Tetap" maxWidth={400}>
+                  <SearchableSelect placeholder="--Pilih--" options={allowances} multiple={true} value={tunjanganTidakTetap} onChange={(val) => setTunjanganTidakTetap(val)} />
+                </FormRow>
+                <FormRow label="" maxWidth={400}>
+                  <FormControlLabel control={<Checkbox size="small" checked={tunjanganBedaPeriode} onChange={(e) => setTunjanganBedaPeriode(e.target.checked)} />} label={<Typography variant="body2" color="text.secondary" fontWeight={600}>Tunjangan Beda Periode</Typography>} />
+                </FormRow>
+              </Stack>
+            </Box>
           )}
           {selectedKategori.includes('Kategori BPJS') && (
-            <FormRow label="Kategori BPJS" maxWidth={400}><SearchableSelect placeholder="--PILIH--" options={[]} /></FormRow>
+            <Box sx={{ mt: 3, mb: 3 }}>
+              <Typography sx={{ fontWeight: 700, color: '#1e293b', borderBottom: '1px solid #e2e8f0', pb: 1, mb: 2 }}>Kategori BPJS</Typography>
+              <Grid container spacing={4}>
+                <Grid item xs={12} md={6}>
+                  <Stack spacing={2.5}>
+                    <FormRow label="BPJS TK Type" alignTop maxWidth={400}>
+                      <SearchableSelect placeholder="--Pilih--" options={['Variable', 'Fix', 'None']} value={bpjsTkType} onChange={val => setBpjsTkType(val)} />
+                    </FormRow>
+                    <FormRow label="Persen BPJS Kesehatan" alignTop maxWidth={400}>
+                      <FormControl component="fieldset">
+                        <RadioGroup value={persenBpjsKesehatan} onChange={(e) => setPersenBpjsKesehatan(e.target.value)}>
+                          <FormControlLabel value="1" control={<Radio size="small" />} label={<Typography variant="body2">Perusahaan 5%</Typography>} sx={{ mb: -1 }} />
+                          <FormControlLabel value="2" control={<Radio size="small" />} label={<Typography variant="body2">Perusahaan 4% dan Karyawan 1%</Typography>} sx={{ mb: -1 }} />
+                          <FormControlLabel value="3" control={<Radio size="small" />} label={<Typography variant="body2">Karyawan 5%</Typography>} />
+                        </RadioGroup>
+                      </FormControl>
+                    </FormRow>
+                    <FormRow label="BPJS Ketenagakerjaan" maxWidth={400}>
+                      <SearchableSelect placeholder="--Pilih--" options={bpjsKetOptions || []} value={bpjsKetenagakerjaan} onChange={val => setBpjsKetenagakerjaan(val)} />
+                    </FormRow>
+                  </Stack>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Stack spacing={2.5}>
+                    <FormRow label="Komponen Upah BPJS TK" alignTop maxWidth={400}>
+                      <SearchableSelect multiple={true} placeholder="--Pilih--" options={komponenUpahOptions || []} value={komponenUpah} onChange={val => setKomponenUpah(val)} />
+                    </FormRow>
+                  </Stack>
+                </Grid>
+              </Grid>
+            </Box>
           )}
           {selectedKategori.includes('Komponen Lembur') && (
-            <FormRow label="Komponen Lembur" maxWidth={400}><SearchableSelect placeholder="--PILIH--" options={[]} /></FormRow>
+            <Box sx={{ mt: 3, mb: 3 }}>
+              <Typography sx={{ fontWeight: 700, color: '#1e293b', borderBottom: '1px solid #e2e8f0', pb: 1, mb: 2 }}>Komponen Lembur</Typography>
+              <Stack spacing={2.5}>
+                <FormRow label="Komponen Lembur" alignTop maxWidth={400}>
+                  <SearchableSelect multiple={true} placeholder="--Pilih--" options={komponenUpahOptions || []} value={komponenLembur} onChange={val => setKomponenLembur(val)} />
+                </FormRow>
+              </Stack>
+            </Box>
           )}
           {selectedKategori.includes('Asuransi') && (
-            <FormRow label="Asuransi" maxWidth={400}><SearchableSelect placeholder="--PILIH--" options={[]} /></FormRow>
+            <Box sx={{ mt: 3, mb: 3 }}>
+              <Typography sx={{ fontWeight: 700, color: '#1e293b', borderBottom: '1px solid #e2e8f0', pb: 1, mb: 2 }}>Kategori Asuransi</Typography>
+              <Stack spacing={2.5}>
+                <FormRow label="Ditanggung oleh" maxWidth={400}>
+                  <SearchableSelect placeholder="--PILIH--" options={ditanggungOlehOptions} value={ditanggungOleh} onChange={val => setDitanggungOleh(val)} />
+                </FormRow>
+              </Stack>
+            </Box>
           )}
           {selectedKategori.includes('Nominal Tunjangan') && (
-            <FormRow label="Nominal Tunjangan" maxWidth={400}><TextField size="small" fullWidth /></FormRow>
+            <Box sx={{ mt: 3, mb: 3 }}>
+              <Typography sx={{ fontWeight: 700, color: '#1e293b', borderBottom: '1px solid #e2e8f0', pb: 1, mb: 2 }}>Update Nominal</Typography>
+              <FormRow label="File" maxWidth="100%">
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <TextField 
+                    size="small" 
+                    placeholder="Choose File" 
+                    disabled 
+                    sx={{ width: 400, '& .MuiOutlinedInput-root': { bgcolor: '#f8fafc' } }} 
+                    InputProps={{
+                      endAdornment: (
+                        <IconButton size="small" sx={{ color: '#22c55e' }}>
+                          <AttachFileIcon />
+                        </IconButton>
+                      )
+                    }}
+                  />
+                  <Button variant="contained" sx={{ bgcolor: '#f0f9ff', color: '#0369a1', boxShadow: 'none', border: '1px solid #bae6fd', '&:hover': { bgcolor: '#e0f2fe', boxShadow: 'none' }, textTransform: 'none', fontWeight: 600 }}>
+                    Upload
+                  </Button>
+                  <Button disabled={isDownloadingTemplate} onClick={handleDownloadTemplate} variant="contained" sx={{ bgcolor: '#f0f9ff', color: '#0369a1', boxShadow: 'none', border: '1px solid #bae6fd', '&:hover': { bgcolor: '#e0f2fe', boxShadow: 'none' }, textTransform: 'none', fontWeight: 600 }}>
+                    {isDownloadingTemplate ? <CircularProgress size={24} sx={{ color: '#0369a1' }} /> : 'Download Template'}
+                  </Button>
+                </Stack>
+              </FormRow>
+
+              <Box sx={{ mt: 2, p: 3, bgcolor: '#f8fafc', borderRadius: 2, border: '1px solid #e2e8f0' }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, mb: 1.5, color: '#0f172a' }}>Kriteria penginputan data :</Typography>
+                <Typography variant="body2" sx={{ color: '#334155', mb: 1, display: 'flex', gap: 1 }}><span>1.</span> <span>Pastikan kategori tunjangan telah sesuai dengan nominal yang ingin diinput</span></Typography>
+                <Typography variant="body2" sx={{ color: '#334155', fontWeight: 700, display: 'flex', gap: 1 }}><span>2.</span> <span>Untuk penulisan nominal hanya berupa angka tidak boleh ada huruf dan karakter ( ! @ # $ % ^ & * ( ) _ + - = {"{"} {"}"} [ ] | \ ; : ' " , . &lt; &gt; / ?)</span></Typography>
+              </Box>
+            </Box>
           )}
         </Stack>
         
@@ -723,10 +1310,13 @@ const MasterClient = () => {
   const [position, setPosition] = useState('');
   const [branch, setBranch] = useState('');
   const [status, setStatus] = useState('');
+  const [employeeType, setEmployeeType] = useState('');
   
   // Dummy State for Pagination
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   
   // Dummy Selection State
   const [selectedIds, setSelectedIds] = useState([]);
@@ -738,6 +1328,12 @@ const MasterClient = () => {
   const [historyUnit, setHistoryUnit] = useState('');
   const [historyPosition, setHistoryPosition] = useState('');
   const [historyBranch, setHistoryBranch] = useState('');
+  
+  const [historyData, setHistoryData] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyPageSize, setHistoryPageSize] = useState(10);
+  const [historyTotalElements, setHistoryTotalElements] = useState(0);
   
   // Delete Dialog State
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -751,11 +1347,46 @@ const MasterClient = () => {
     setSnackbar(prev => ({ ...prev, open: false }));
   };
 
-  // Dummy Dropdown Options
-  const divisions = ['Business Development', 'Bank NEO Commerce', 'IT Programmer', 'Management', 'Operational'];
-  const units = ['BCA', 'BNC Sales Quality Control', 'IT Programmer', 'EDC Machine', 'Sysmex', 'Laku Pandai'];
-  const positions = ['Admin Support', 'Sales Quality Control', 'Admin Inputer', 'Mobile Sales', 'GM', 'Cook 3', 'PROGRAMMER', 'SUPERVISOR'];
-  const branches = ['JAKARTA', 'TANGERANG', 'Johan Pahlawan', 'BANDUNG', 'BOGOR', 'Balikpapan'];
+  // Dropdown Options State
+  const [dropdowns, setDropdowns] = useState({
+    divisions: [],
+    units: [],
+    positions: [],
+    branches: [],
+    employeeTypes: []
+  });
+
+  const fetchDropdowns = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_URL}/api/master-employee/dropdowns`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data && Object.keys(res.data).length > 0) {
+        setDropdowns(res.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch dropdowns:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchDropdowns();
+  }, []);
+
+  const mainDropdowns = useCascadingDropdowns(dropdowns.combinations || [], { division, unit, position, employeeType, branch });
+  const historyDropdowns = useCascadingDropdowns(dropdowns.combinations || [], { division: historyDivision, unit: historyUnit, position: historyPosition, branch: historyBranch });
+
+  const divisions = mainDropdowns.divisions || [];
+  const units = mainDropdowns.units || [];
+  const positions = mainDropdowns.positions || [];
+  const branches = mainDropdowns.branches || [];
+  //const employeeTypes = mainDropdowns.employeeTypes || ['REGULER', 'WNA', 'MAGANG'];
+
+  const histDivisions = historyDropdowns.divisions || [];
+  const histUnits = historyDropdowns.units || [];
+  const histPositions = historyDropdowns.positions || [];
+  const histBranches = historyDropdowns.branches || [];
 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -763,24 +1394,32 @@ const MasterClient = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const endpoint = role === 'SPV' ? 'http://localhost:8080/api/master-client/spv/list' : 'http://localhost:8080/api/master-client/staff/list';
+      const endpoint = role === 'SPV' ? `${API_URL}/api/master-client/spv/list?page=${page - 1}&size=${pageSize}` : `${API_URL}/api/master-client/staff/list?page=${page - 1}&size=${pageSize}`;
       const payload = {
         search,
         division,
         unitName: unit,
         position,
         branch,
+        employeeType,
         status: role === 'SPV' ? status : undefined,
       };
       const token = localStorage.getItem('token');
       const headers = {
         'Authorization': `Bearer ${token}`,
-        'user-id': user?.id || 1,
+        'user-id': user?.id || (role === 'SPV' ? 15 : 16),
         'fullname': user?.username || (role === 'SPV' ? 'SPV HRD' : 'Staff HRD')
       };
       
       const response = await axios.post(endpoint, payload, { headers });
-      setData(response.data || []);
+      
+      if (response.data && response.data.content !== undefined) {
+        setData(response.data.content);
+        setTotalElements(response.data.totalElements || response.data.content.length);
+        setTotalPages(response.data.totalPages || 1);
+      } else {
+        setData(response.data || []);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
       setSnackbar({ open: true, message: 'Gagal mengambil data dari server', severity: 'error' });
@@ -791,8 +1430,47 @@ const MasterClient = () => {
 
   useEffect(() => {
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [role]); // Refetch when role changes
+  }, [role, page, pageSize, search, division, unit, position, branch, employeeType, status]); // eslint-disable-next-line react-hooks/exhaustive-deps
+
+  const fetchHistoryData = async () => {
+    setHistoryLoading(true);
+    try {
+      const endpoint = `${API_URL}/api/master-client/${role.toLowerCase()}/history?page=${historyPage - 1}&size=${historyPageSize}`;
+      const payload = {
+        search: historySearch,
+        division: historyDivision,
+        unitName: historyUnit,
+        position: historyPosition,
+        branch: historyBranch
+      };
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'user-id': user?.id || (role === 'SPV' ? 15 : 16),
+        'fullname': user?.username || (role === 'SPV' ? 'SPV HRD' : 'Staff HRD')
+      };
+      
+      const response = await axios.post(endpoint, payload, { headers });
+      
+      if (response.data && response.data.content !== undefined) {
+        setHistoryData(response.data.content);
+        setHistoryTotalElements(response.data.totalElements || response.data.content.length);
+      } else {
+        setHistoryData(response.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching history data:', error);
+      setSnackbar({ open: true, message: 'Gagal mengambil data history dari server', severity: 'error' });
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (openHistory) {
+      fetchHistoryData();
+    }
+  }, [openHistory, role, historyPage, historyPageSize, historySearch, historyDivision, historyUnit, historyPosition, historyBranch]); // eslint-disable-next-line react-hooks/exhaustive-deps
 
   const handleExport = async () => {
     if (!division) {
@@ -801,7 +1479,7 @@ const MasterClient = () => {
     }
     setSnackbar({ open: true, message: 'Memulai proses export data...', severity: 'info' });
     try {
-      const endpoint = role === 'SPV' ? 'http://localhost:8080/api/master-client/spv/export' : 'http://localhost:8080/api/master-client/staff/export';
+      const endpoint = role === 'SPV' ? `${API_URL}/api/master-client/spv/export` : `${API_URL}/api/master-client/staff/export`;
       const payload = {
         search,
         division,
@@ -832,18 +1510,18 @@ const MasterClient = () => {
     }
   };
 
-  const dummyHistoryData = [
-    { id: 1, division: 'Youtap Indonesia', unit: 'Youtap Indonesia (PKWT)', position: 'Content Writer', branch: 'JAKARTA', employeeType: 'PKWT', createdDate: '2026-07-08 10:42:37.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
-    { id: 2, division: 'Youtap Indonesia', unit: 'Youtap Indonesia (PKWT)', position: 'Content Writer', branch: 'JAKARTA', employeeType: 'PKWT', createdDate: '2026-07-08 10:41:22.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
-    { id: 3, division: 'Youtap Indonesia', unit: 'Youtap Indonesia (PKWT)', position: 'Content Writer', branch: 'JAKARTA', employeeType: 'PKWT', createdDate: '2026-07-08 10:40:56.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
-    { id: 4, division: 'Yup Paylater', unit: 'Yup Paylater', position: 'Mobile Sales', branch: 'JAKARTA', employeeType: 'MITRA', createdDate: '2026-07-07 11:39:47.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
-    { id: 5, division: 'Agriaku Digital Indonesia', unit: 'Agriaku', position: 'Account Executive', branch: 'INDRAMAYU', employeeType: 'PKWT', createdDate: '2026-07-07 10:43:02.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
-    { id: 6, division: 'MBA', unit: 'MBA', position: 'Desk Collection', branch: 'JAKARTA', employeeType: 'MAGANG', createdDate: '2026-07-07 10:03:20.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
-    { id: 7, division: 'MBA', unit: 'MBA', position: 'Desk Collection', branch: 'JAKARTA', employeeType: 'MAGANG', createdDate: '2026-07-07 10:02:29.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
-    { id: 8, division: 'MBA', unit: 'MBA', position: 'Desk Collection', branch: 'JAKARTA', employeeType: 'MAGANG', createdDate: '2026-07-07 10:02:12.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
-    { id: 9, division: 'Ananta Nadi Nusantara', unit: 'Ananta Nadi Nusantara', position: 'Sales Merchant Strategic', branch: 'Ponorogo', employeeType: 'PKWT', createdDate: '2026-07-03 14:12:30.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
-    { id: 10, division: 'IT, GA & Logistik', unit: 'General Affair/Logistik', position: 'Office Boy', branch: 'BOGOR', employeeType: 'MAGANG', createdDate: '2026-07-03 09:43:12.0', createdBy: 'Staff HRD', status: 'PROCESSED' }
-  ];
+  // const dummyHistoryData = [
+  //   { id: 1, division: 'Youtap Indonesia', unit: 'Youtap Indonesia (PKWT)', position: 'Content Writer', branch: 'JAKARTA', employeeType: 'PKWT', createdDate: '2026-07-08 10:42:37.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
+  //   { id: 2, division: 'Youtap Indonesia', unit: 'Youtap Indonesia (PKWT)', position: 'Content Writer', branch: 'JAKARTA', employeeType: 'PKWT', createdDate: '2026-07-08 10:41:22.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
+  //   { id: 3, division: 'Youtap Indonesia', unit: 'Youtap Indonesia (PKWT)', position: 'Content Writer', branch: 'JAKARTA', employeeType: 'PKWT', createdDate: '2026-07-08 10:40:56.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
+  //   { id: 4, division: 'Yup Paylater', unit: 'Yup Paylater', position: 'Mobile Sales', branch: 'JAKARTA', employeeType: 'MITRA', createdDate: '2026-07-07 11:39:47.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
+  //   { id: 5, division: 'Agriaku Digital Indonesia', unit: 'Agriaku', position: 'Account Executive', branch: 'INDRAMAYU', employeeType: 'PKWT', createdDate: '2026-07-07 10:43:02.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
+  //   { id: 6, division: 'MBA', unit: 'MBA', position: 'Desk Collection', branch: 'JAKARTA', employeeType: 'MAGANG', createdDate: '2026-07-07 10:03:20.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
+  //   { id: 7, division: 'MBA', unit: 'MBA', position: 'Desk Collection', branch: 'JAKARTA', employeeType: 'MAGANG', createdDate: '2026-07-07 10:02:29.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
+  //   { id: 8, division: 'MBA', unit: 'MBA', position: 'Desk Collection', branch: 'JAKARTA', employeeType: 'MAGANG', createdDate: '2026-07-07 10:02:12.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
+  //   { id: 9, division: 'Ananta Nadi Nusantara', unit: 'Ananta Nadi Nusantara', position: 'Sales Merchant Strategic', branch: 'Ponorogo', employeeType: 'PKWT', createdDate: '2026-07-03 14:12:30.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
+  //   { id: 10, division: 'IT, GA & Logistik', unit: 'General Affair/Logistik', position: 'Office Boy', branch: 'BOGOR', employeeType: 'MAGANG', createdDate: '2026-07-03 09:43:12.0', createdBy: 'Staff HRD', status: 'PROCESSED' }
+  // ];
 
   const handleOpenEdit = (row) => {
     setEditData(row);
@@ -1024,6 +1702,7 @@ const MasterClient = () => {
               {/* Row 2: Filter Dropdowns */}
               <Stack direction="row" spacing={1.5} flexWrap="wrap">
                 <SearchableSelect 
+                  freeSolo={true}
                   placeholder="(Division)" 
                   value={division} 
                   onChange={(val) => {
@@ -1035,9 +1714,10 @@ const MasterClient = () => {
                   error={divisionError}
                   helperText={divisionError ? "Harap di isi" : ""}
                 />
-                <SearchableSelect placeholder="(Unit)" value={unit} onChange={setUnit} options={units} minWidth={160} />
-                <SearchableSelect placeholder="(Position)" value={position} onChange={setPosition} options={positions} minWidth={160} />
-                <SearchableSelect placeholder="(Branch)" value={branch} onChange={setBranch} options={branches} minWidth={160} />
+                <SearchableSelect freeSolo={true} placeholder="(Unit)" value={unit} onChange={setUnit} options={units} minWidth={160} />
+                <SearchableSelect freeSolo={true} placeholder="(Position)" value={position} onChange={setPosition} options={positions} minWidth={160} />
+                <SearchableSelect freeSolo={true} placeholder="(Branch)" value={branch} onChange={setBranch} options={branches} minWidth={160} />
+                {/* <SearchableSelect freeSolo={true} placeholder="(Employee Type)" value={employeeType} onChange={setEmployeeType} options={['REGULER', 'WNA', 'MAGANG']} minWidth={160} /> */}
                 {role === 'SPV' && (
                   <SearchableSelect 
                     placeholder="(Status)" 
@@ -1058,8 +1738,8 @@ const MasterClient = () => {
             loading={loading}
             page={page}
             pageSize={pageSize}
-            totalElements={data.length}
-            totalPages={Math.ceil(data.length / pageSize) || 1}
+            totalElements={totalElements}
+            totalPages={totalPages}
             onPageChange={setPage}
             onPageSizeChange={setPageSize}
             headerBg="#f8fafc"
@@ -1067,7 +1747,18 @@ const MasterClient = () => {
           />
         </>
       ) : viewMode === 'addManual' ? (
-        <AddClientForm onCancel={() => setViewMode('list')} />
+        <AddClientForm onCancel={(shouldReload) => { 
+          setViewMode('list'); 
+          if (shouldReload === true) {
+            setSearch('');
+            setDivision('');
+            setUnit('');
+            setPosition('');
+            setBranch('');
+            setEmployeeType('');
+            setTimeout(() => { fetchData(); }, 100);
+          } 
+        }} />
       ) : viewMode === 'addUpload' ? (
         <UploadClientForm onCancel={() => setViewMode('list')} />
       ) : viewMode === 'editClient' ? (
@@ -1136,13 +1827,13 @@ const MasterClient = () => {
             </Box>
             
             <Stack direction="row" spacing={1}>
-              <SearchableSelect placeholder="(Division)" value={historyDivision} onChange={setHistoryDivision} options={divisions} minWidth={250} />
-              <SearchableSelect placeholder="(Unit)" value={historyUnit} onChange={setHistoryUnit} options={units} minWidth={250} />
-              <SearchableSelect placeholder="(Position)" value={historyPosition} onChange={setHistoryPosition} options={positions} minWidth={250} />
+              <SearchableSelect freeSolo={true} placeholder="(Division)" value={historyDivision} onChange={setHistoryDivision} options={histDivisions} minWidth={250} />
+              <SearchableSelect freeSolo={true} placeholder="(Unit)" value={historyUnit} onChange={setHistoryUnit} options={histUnits} minWidth={250} />
+              <SearchableSelect freeSolo={true} placeholder="(Position)" value={historyPosition} onChange={setHistoryPosition} options={histPositions} minWidth={250} />
             </Stack>
             
             <Stack direction="row" spacing={1} alignItems="center">
-              <SearchableSelect placeholder="(Branch)" value={historyBranch} onChange={setHistoryBranch} options={branches} minWidth={250} />
+              <SearchableSelect freeSolo={true} placeholder="(Branch)" value={historyBranch} onChange={setHistoryBranch} options={histBranches} minWidth={250} />
               <Typography variant="body2" sx={{ mx: 1, fontWeight: 600 }}>Periode</Typography>
               <TextField type="date" size="small" sx={{ width: 160 }} InputLabelProps={{ shrink: true }} />
               <Typography variant="body2">-</Typography>
@@ -1153,14 +1844,14 @@ const MasterClient = () => {
           <Box sx={{ mt: 3 }}>
             <DataTable 
               columns={historyColumns} 
-              data={dummyHistoryData} 
-              page={1} 
-              pageSize={10} 
-              totalElements={100} 
-              totalPages={10} 
-              onPageChange={() => {}} 
-              onPageSizeChange={() => {}} 
-              loading={false}
+              data={historyData} 
+              page={historyPage} 
+              pageSize={historyPageSize} 
+              totalElements={historyTotalElements} 
+              totalPages={Math.ceil(historyTotalElements / historyPageSize) || 1} 
+              onPageChange={setHistoryPage} 
+              onPageSizeChange={setHistoryPageSize} 
+              loading={historyLoading}
               headerBg="#f8fafc"
               headerColor="#1e293b"
             />
