@@ -12,6 +12,7 @@ import {
 } from '@mui/icons-material';
 import SearchableSelect from '../../components/Common/SearchableSelect';
 import DataTable from '../../components/Common/DataTable';
+import CustomModal from '../../components/Common/CustomModal';
 import { useCascadingDropdowns } from '../../hooks/useCascadingDropdowns';
 import { useDynamicClientDropdowns } from '../../hooks/useDynamicClientDropdowns';
 
@@ -493,13 +494,8 @@ const MasterPicUk = () => {
         </Alert>
       </Snackbar>
 
-      {/* Dialog Log History MFee */}
-      <Dialog open={openHistory} onClose={() => setOpenHistory(false)} maxWidth="xl" fullWidth PaperProps={{ sx: { borderRadius: 2 } }}>
-        <DialogTitle sx={{ bgcolor: '#3b82f6', color: 'white', py: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Log History</Typography>
-          <IconButton onClick={() => setOpenHistory(false)} size="small" sx={{ color: 'white' }}><CloseIcon fontSize="small" /></IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ p: 2 }}>
+      {/* Modal History Log */}
+      <CustomModal open={openHistory} onClose={() => setOpenHistory(false)} title="Log History" maxWidth="xl">
           <Box sx={{ display: 'flex', gap: 1, mb: 2, alignItems: 'center', mt: 1 }}>
             <TextField 
               size="small" 
@@ -541,8 +537,7 @@ const MasterPicUk = () => {
             onPageSizeChange={setHistoryPageSize} 
             loading={historyLoading}
           />
-        </DialogContent>
-      </Dialog>
+      </CustomModal>
     </Box>
   );
 };

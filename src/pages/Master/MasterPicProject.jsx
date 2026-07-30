@@ -12,6 +12,7 @@ import {
 import SearchableSelect from '../../components/Common/SearchableSelect';
 import DataTable from '../../components/Common/DataTable';
 import { useCascadingDropdowns } from '../../hooks/useCascadingDropdowns';
+import CustomModal from '../../components/Common/CustomModal';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
@@ -308,12 +309,7 @@ const MasterPicProject = () => {
       />
 
       {/* Edit Modal */}
-      <Dialog open={openEdit} onClose={() => setOpenEdit(false)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 2 } }}>
-        <DialogTitle sx={{ bgcolor: '#3b82f6', color: 'white', py: 1.5, px: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, fontSize: '1rem' }}>Edit Master Pic</Typography>
-          <IconButton onClick={() => setOpenEdit(false)} size="small" sx={{ color: 'white' }}><CloseIcon fontSize="small" /></IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ p: 4 }}>
+      <CustomModal open={openEdit} onClose={() => setOpenEdit(false)} title="Detail PIC Project" maxWidth="md">
           <Grid container spacing={3} sx={{ mt: 1 }}>
             {/* Left Column */}
             <Grid item xs={12} md={6}>
@@ -391,36 +387,43 @@ const MasterPicProject = () => {
               )}
             </Box>
           </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, pt: 0 }}>
-          <Button 
-            variant="contained" 
-            onClick={async () => {
-              try {
-                const token = localStorage.getItem('token');
-                await axios.put(`${API_URL}/api/master-pic-project/${editData.id}`, {
-                  picUtama,
-                  picTambahanList
-                }, {
-                  headers: { 
-                    'Authorization': `Bearer ${token}`,
-                    'fullname': user?.username || 'Staff HRD'
-                  }
-                });
-                setSnackbar({ open: true, message: 'Berhasil Update Pic', severity: 'success' });
-                setOpenEdit(false);
-                fetchData();
-              } catch (error) {
-                console.error(error);
-                setSnackbar({ open: true, message: 'Gagal Update Pic', severity: 'error' });
-              }
-            }}
-            sx={{ bgcolor: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', boxShadow: 'none', fontWeight: 600, borderRadius: '8px', '&:hover': { bgcolor: '#dbeafe', boxShadow: 'none' } }}
-          >
-            UPDATE
-          </Button>
-        </DialogActions>
-      </Dialog>
+      
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, width: '100%', mt: 2 }}>
+        <Button 
+          variant="outlined" 
+          onClick={() => setOpenEdit(false)}
+          sx={{ px: 3, borderRadius: 1.5 }}
+        >
+          Tutup
+        </Button>
+        <Button 
+          variant="contained" 
+          onClick={async () => {
+            try {
+              const token = localStorage.getItem('token');
+              await axios.put(`${API_URL}/api/master-pic-project/${editData.id}`, {
+                picUtama,
+                picTambahanList
+              }, {
+                headers: { 
+                  'Authorization': `Bearer ${token}`,
+                  'fullname': user?.username || 'Staff HRD'
+                }
+              });
+              setSnackbar({ open: true, message: 'Berhasil Update Pic', severity: 'success' });
+              setOpenEdit(false);
+              fetchData();
+            } catch (error) {
+              console.error(error);
+              setSnackbar({ open: true, message: 'Gagal Update Pic', severity: 'error' });
+            }
+          }}
+          sx={{ bgcolor: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', boxShadow: 'none', fontWeight: 600, borderRadius: '8px', '&:hover': { bgcolor: '#dbeafe', boxShadow: 'none' } }}
+        >
+          UPDATE
+        </Button>
+      </Box>
+    </CustomModal>
       
       <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar({ ...snackbar, open: false })} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
         <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: '100%', borderRadius: 2, boxShadow: 3 }}>

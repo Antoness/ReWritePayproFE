@@ -14,6 +14,7 @@ import {
 import DataTable from '../../components/Common/DataTable';
 import CustomSnackbar from '../../components/Common/CustomSnackbar';
 import CustomConfirmDialog from '../../components/Common/CustomConfirmDialog';
+import CustomModal from '../../components/Common/CustomModal';
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || import.meta.env.REACT_APP_API_URL || 'http://localhost:8080';
@@ -327,13 +328,8 @@ const MasterPtkp = () => {
         loading={loading}
       />
 
-      {/* Dialog Add */}
-      <Dialog open={openAdd} onClose={() => setOpenAdd(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 2 } }}>
-        <DialogTitle sx={{ bgcolor: '#3b82f6', color: 'white', py: 1, px: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Add PTKP</Typography>
-          <IconButton onClick={() => setOpenAdd(false)} size="small" sx={{ color: 'white' }}><CloseIcon fontSize="small" /></IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ p: 3 }}>
+      {/* Modal Add PTKP */}
+      <CustomModal open={openAdd} onClose={() => setOpenAdd(false)} title="Tambah PTKP Baru" maxWidth="xs">
           <Stack spacing={2} sx={{ mt: 1 }}>
             <Box>
               <Typography sx={{ fontWeight: 600, mb: 1 }}>Tipe (e.g. TK/0, K/1)</Typography>
@@ -373,16 +369,10 @@ const MasterPtkp = () => {
               </Button>
             </Box>
           </Stack>
-        </DialogContent>
-      </Dialog>
+      </CustomModal>
 
-      {/* Dialog Edit */}
-      <Dialog open={openEdit} onClose={() => setOpenEdit(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 2 } }}>
-        <DialogTitle sx={{ bgcolor: '#3b82f6', color: 'white', py: 1, px: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Edit PTKP</Typography>
-          <IconButton onClick={() => setOpenEdit(false)} size="small" sx={{ color: 'white' }}><CloseIcon fontSize="small" /></IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ p: 3 }}>
+      {/* Modal Edit PTKP */}
+      <CustomModal open={openEdit} onClose={() => setOpenEdit(false)} title="Edit PTKP" maxWidth="xs">
           <Stack spacing={2} sx={{ mt: 1 }}>
             <Box>
               <Typography sx={{ fontWeight: 600, mb: 1 }}>Tipe</Typography>
@@ -425,15 +415,10 @@ const MasterPtkp = () => {
               </Box>
             )}
           </Stack>
-        </DialogContent>
-      </Dialog>
+      </CustomModal>
 
-      <Dialog open={openHistory} onClose={() => setOpenHistory(false)} maxWidth="lg" fullWidth PaperProps={{ sx: { borderRadius: 2 } }}>
-        <DialogTitle sx={{ bgcolor: '#3b82f6', color: 'white', py: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>History PTKP</Typography>
-          <IconButton onClick={() => setOpenHistory(false)} size="small" sx={{ color: 'white' }}><CloseIcon fontSize="small" /></IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ p: 2 }}>
+      {/* Modal History Log */}
+      <CustomModal open={openHistory} onClose={() => setOpenHistory(false)} title="Log History" maxWidth="lg">
           <Box sx={{ display: 'flex', gap: 1, mb: 2, alignItems: 'center', mt: 1 }}>
             <TextField 
               size="small" 
@@ -466,8 +451,7 @@ const MasterPtkp = () => {
             onPageSizeChange={setHistoryPageSize} 
             loading={historyLoading}
           />
-        </DialogContent>
-      </Dialog>
+      </CustomModal>
       <CustomConfirmDialog
         open={confirmDialog.open}
         title={confirmDialog.title}
