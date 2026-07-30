@@ -12,6 +12,7 @@ import MasterPkp from './pages/Master/MasterPkp';
 import MasterClient from './pages/Master/MasterClient';
 import MasterPicUk from './pages/Master/MasterPicUk';
 import MasterPicProject from './pages/Master/MasterPicProject';
+import MasterLibur from './pages/Master/MasterLibur';
 import Login from './pages/Login';
 import { Typography, Box, Paper, Grid } from '@mui/material';
 
@@ -36,6 +37,7 @@ function App() {
         <Route path="/master/client" element={<ProtectedRoute><MasterClient /></ProtectedRoute>} />
         <Route path="/master/pic-uk" element={<ProtectedRoute><MasterPicUk /></ProtectedRoute>} />
         <Route path="/master/picproject" element={<ProtectedRoute><MasterPicProject /></ProtectedRoute>} />
+        <Route path="/master/libur" element={<ProtectedRoute><MasterLibur /></ProtectedRoute>} />
         {/* Placeholder for other routes */}
         <Route path="*" element={<ProtectedRoute><Typography variant="h5">Module Under Development</Typography></ProtectedRoute>} />
       </Routes>

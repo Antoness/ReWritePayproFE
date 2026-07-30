@@ -15,6 +15,7 @@ import {
 } from '@mui/icons-material';
 import DataTable from '../../components/Common/DataTable';
 import CustomSnackbar from '../../components/Common/CustomSnackbar';
+import CustomModal from '../../components/Common/CustomModal';
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || import.meta.env.REACT_APP_API_URL || 'http://localhost:8080';
@@ -291,13 +292,8 @@ const MasterTer = () => {
         loading={loading}
       />
 
-      {/* Dialog Upload TER */}
-      <Dialog open={openUpload} onClose={() => setOpenUpload(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle sx={{ bgcolor: '#3b82f6', color: 'white', py: 1.5, px: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.1rem' }}>Upload TER Data</Typography>
-          <IconButton onClick={() => setOpenUpload(false)} size="small" sx={{ color: 'white' }}><CloseIcon /></IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ p: 3 }}>
+      {/* Modal Upload Master TER */}
+      <CustomModal open={openUpload} onClose={() => setOpenUpload(false)} title="Upload Master TER" maxWidth="sm">
           <Stack spacing={3} sx={{ mt: 1 }}>
             
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, bgcolor: '#f8fafc', borderRadius: 2, border: '1px dashed #cbd5e1' }}>
@@ -370,8 +366,7 @@ const MasterTer = () => {
               </Typography>
             </Alert>
           </Stack>
-        </DialogContent>
-      </Dialog>
+      </CustomModal>
 
       <CustomSnackbar 
         open={snackbar.open} 

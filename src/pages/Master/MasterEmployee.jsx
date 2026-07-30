@@ -25,6 +25,9 @@ import {
 import DataTable from '../../components/Common/DataTable';
 import { useCascadingDropdowns } from '../../hooks/useCascadingDropdowns';
 import SearchableSelect from '../../components/Common/SearchableSelect';
+import CustomSnackbar from '../../components/Common/CustomSnackbar';
+import CustomConfirmDialog from '../../components/Common/CustomConfirmDialog';
+import CustomModal from '../../components/Common/CustomModal';
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || import.meta.env.REACT_APP_API_URL || 'http://localhost:8080';
@@ -834,11 +837,7 @@ const MasterEmployee = () => {
     const fileInputRef = React.useRef(null);
 
     return (
-      <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle sx={{ bgcolor: '#3b82f6', color: 'white', py: 1.5, px: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1rem' }}>{title}</Typography>
-          <IconButton onClick={onClose} size="small" sx={{ color: 'white' }}><CloseIcon /></IconButton>
-        </DialogTitle>
+      <CustomModal open={open} onClose={onClose} title={title} maxWidth="md">
         <DialogContent sx={{ p: 3 }}>
           <Stack spacing={2} sx={{ mt: 2 }}>
             <Grid container spacing={2} alignItems="center">
@@ -1008,7 +1007,7 @@ const MasterEmployee = () => {
             )}
           </Stack>
         </DialogContent>
-      </Dialog>
+      </CustomModal>
     );
   };
 
@@ -1733,12 +1732,8 @@ const MasterEmployee = () => {
       </>
       )}
 
-      {/* Dialog Edit Employee */}
-      <Dialog open={openEdit} onClose={() => setOpenEdit(false)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle sx={{ bgcolor: '#3b82f6', color: 'white', py: 1.5, px: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1rem' }}>Edit Employee</Typography>
-          <IconButton onClick={() => setOpenEdit(false)} size="small" sx={{ color: 'white' }}><CloseIcon /></IconButton>
-        </DialogTitle>
+      {/* Modal Edit Master Employee */}
+      <CustomModal open={openEdit} onClose={() => setOpenEdit(false)} title="Edit Master Employee" maxWidth="md">
         <DialogContent sx={{ p: 3 }}>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
             {[
@@ -1779,7 +1774,7 @@ const MasterEmployee = () => {
             </Button>
           </Box>
         </DialogContent>
-      </Dialog>
+      </CustomModal>
 
       {/* Dialog Upload NPWP */}
       <UploadDialog open={openUploadNpwp} onClose={() => setOpenUploadNpwp(false)} title="Upload NPWP" type="NPWP" />
@@ -1790,12 +1785,8 @@ const MasterEmployee = () => {
       {/* Dialog Upload Data WNA */}
       <UploadDialog open={openUploadWna} onClose={() => setOpenUploadWna(false)} title="Upload Data WNA" type="WNA" />
 
-      {/* Dialog Data WNA */}
-      <Dialog open={openWna} onClose={() => setOpenWna(false)} maxWidth="lg" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle sx={{ bgcolor: '#3b82f6', color: 'white', py: 1.5, px: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1rem' }}>Data WNA</Typography>
-          <IconButton onClick={() => setOpenWna(false)} size="small" sx={{ color: 'white' }}><CloseIcon /></IconButton>
-        </DialogTitle>
+      {/* Modal Cek WNA */}
+      <CustomModal open={openWna} onClose={() => setOpenWna(false)} title="Data Tenaga Kerja WNA" maxWidth="lg">
         <DialogContent sx={{ p: 3 }}>
           <Stack spacing={2} sx={{ mt: 1 }}>
             {/* Filter Section wrapped in a nice border box */}
@@ -2033,42 +2024,10 @@ const MasterEmployee = () => {
             </Box>
           </Stack>
         </DialogContent>
-      </Dialog>
-
+      </CustomModal>
 
       {/* Dialog Konfirmasi Simpan / Process */}
-      <Dialog open={openConfirmProcess} onClose={() => setOpenConfirmProcess(false)} maxWidth="xs" fullWidth sx={{ zIndex: 1400 }} PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle sx={{ bgcolor: '#3b82f6', color: 'white', py: 1, px: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography sx={{ fontWeight: 700, fontSize: '0.9rem' }}>Simpan</Typography>
-          <IconButton onClick={() => setOpenConfirmProcess(false)} size="small" sx={{ color: 'white' }}><CloseIcon sx={{ fontSize: 18 }} /></IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ p: 3 }}>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <Typography sx={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: 600 }}>
-              Are you sure want to upload this file ?
-            </Typography>
-            <Typography sx={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>
-              {selectedFileName || 'Template NPWP.xls'}
-            </Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', pt: 1 }}>
-              <Button
-                variant="contained"
-                onClick={() => startProcessSimulation(openUploadWna ? 'WNA' : openUploadNpwp ? 'NPWP' : 'TKU')}
-                sx={{ 
-                  bgcolor: '#3b82f6', 
-                  '&:hover': { bgcolor: '#2563eb' }, 
-                  textTransform: 'none', 
-                  fontWeight: 700, 
-                  fontSize: '0.8rem',
-                  px: 3 
-                }}
-              >
-                SIMPAN
-              </Button>
-            </Box>
-          </Stack>
-        </DialogContent>
-      </Dialog>
+      <CustomConfirmDialog open={openConfirmProcess} onClose={() => setOpenConfirmProcess(false)} title="Simpan" message="Are you sure want to upload this file ?" onConfirm={() => startProcessSimulation(openUploadWna ? 'WNA' : openUploadNpwp ? 'NPWP' : 'TKU')} />
 
       {/* Floating Progress Bar Service */}
       {isUploadingInBackground && (
@@ -2155,12 +2114,8 @@ const MasterEmployee = () => {
         </Box>
       )}
 
-      {/* Snackbar */}
-      <Dialog open={openValidationModal} onClose={() => setOpenValidationModal(false)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle sx={{ bgcolor: '#f59e0b', color: 'white', py: 1.5, px: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1rem' }}>Peringatan Data Belum Lengkap</Typography>
-          <IconButton onClick={() => setOpenValidationModal(false)} size="small" sx={{ color: 'white' }}><CloseIcon /></IconButton>
-        </DialogTitle>
+      {/* Validation Modal */}
+      <CustomModal open={openValidationModal} onClose={() => setOpenValidationModal(false)} title="Peringatan Data Belum Lengkap" maxWidth="md">
         <DialogContent sx={{ p: 3 }}>
           <Alert severity="warning" sx={{ mb: 2, fontWeight: 600 }}>
             Permintaan data (Passport, KITAS, Asal Negara, dan Tanggal Izin Kerja) yang belum disetujui SPV. Silahkan cek melalui form "Data Izin WNA" dan mohon selesaikan dahulu.
@@ -2189,13 +2144,10 @@ const MasterEmployee = () => {
              <Button variant="contained" onClick={() => setOpenValidationModal(false)} sx={{ bgcolor: '#64748b', textTransform: 'none', fontWeight: 600 }}>Tutup</Button>
           </Box>
         </DialogContent>
-      </Dialog>
+      </CustomModal>
 
-      <Dialog open={openWnaEdit} onClose={() => setOpenWnaEdit(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle sx={{ bgcolor: '#4f46e5', color: 'white', py: 1.5, px: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1rem' }}>Edit WNA ({selectedWna?.nik})</Typography>
-          <IconButton onClick={() => setOpenWnaEdit(false)} size="small" sx={{ color: 'white' }}><CloseIcon /></IconButton>
-        </DialogTitle>
+      {/* Modal Edit WNA */}
+      <CustomModal open={openWnaEdit} onClose={() => setOpenWnaEdit(false)} title="Edit Approval WNA" maxWidth="sm">
         <DialogContent sx={{ p: 3 }}>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField 
@@ -2231,13 +2183,9 @@ const MasterEmployee = () => {
              )}
           </Box>
         </DialogContent>
-      </Dialog>
+      </CustomModal>
 
-      <Dialog open={openUploadErrorModal} onClose={() => setOpenUploadErrorModal(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle sx={{ bgcolor: '#ef4444', color: 'white', py: 1.5, px: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1rem' }}>Data Gagal Upload</Typography>
-          <IconButton onClick={() => setOpenUploadErrorModal(false)} size="small" sx={{ color: 'white' }}><CloseIcon /></IconButton>
-        </DialogTitle>
+      <CustomModal open={openUploadErrorModal} onClose={() => setOpenUploadErrorModal(false)} title="Data Gagal Upload" maxWidth="sm">
         <DialogContent sx={{ p: 3 }}>
           <Alert severity="error" sx={{ mb: 2, fontWeight: 600 }}>
             Terdapat beberapa baris data yang gagal diproses:
@@ -2255,15 +2203,10 @@ const MasterEmployee = () => {
              <Button variant="contained" onClick={() => setOpenUploadErrorModal(false)} sx={{ bgcolor: '#64748b', textTransform: 'none', fontWeight: 600 }}>Tutup</Button>
           </Box>
         </DialogContent>
-      </Dialog>
+      </CustomModal>
 
       {/* Dialog Konfirmasi Bulk Approve WNA */}
-      <Dialog open={openBulkApproveWna} onClose={() => setOpenBulkApproveWna(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle sx={{ bgcolor: '#3b82f6', color: 'white', py: 1.5, px: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1rem' }}>Konfirmasi Approve</Typography>
-          <IconButton onClick={() => setOpenBulkApproveWna(false)} size="small" sx={{ color: 'white' }}><CloseIcon /></IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ p: 4, textAlign: 'center' }}>
+      <CustomModal open={openBulkApproveWna} onClose={() => setOpenBulkApproveWna(false)} title="Konfirmasi Approve" maxWidth="sm">
           <Typography variant="body1" sx={{ fontWeight: 600, color: '#334155', mb: 3 }}>
             Apakah Anda yakin ingin melakukan Approve untuk {wnaSelectedIds.length} data WNA yang dipilih?
           </Typography>
@@ -2275,16 +2218,10 @@ const MasterEmployee = () => {
               Ya, Approve
             </Button>
           </Stack>
-        </DialogContent>
-      </Dialog>
+      </CustomModal>
 
       {/* Dialog Konfirmasi Bulk Reject WNA */}
-      <Dialog open={openBulkRejectWna} onClose={() => setOpenBulkRejectWna(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle sx={{ bgcolor: '#ef4444', color: 'white', py: 1.5, px: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1rem' }}>Konfirmasi Reject</Typography>
-          <IconButton onClick={() => setOpenBulkRejectWna(false)} size="small" sx={{ color: 'white' }}><CloseIcon /></IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ p: 4, textAlign: 'center' }}>
+      <CustomModal open={openBulkRejectWna} onClose={() => setOpenBulkRejectWna(false)} title="Konfirmasi Reject" maxWidth="sm">
           <Typography variant="body1" sx={{ fontWeight: 600, color: '#334155', mb: 3 }}>
             Apakah Anda yakin ingin melakukan Reject untuk {wnaSelectedIds.length} data WNA yang dipilih?
           </Typography>
@@ -2296,8 +2233,7 @@ const MasterEmployee = () => {
               Ya, Reject
             </Button>
           </Stack>
-        </DialogContent>
-      </Dialog>
+      </CustomModal>
 
       <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
         <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%', borderRadius: 2, boxShadow: 3 }}>

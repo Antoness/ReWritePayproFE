@@ -14,6 +14,7 @@ import {
   ArrowBack as ArrowBackIcon, AttachFile as AttachFileIcon,
   CompareArrows as CompareArrowsIcon, RemoveCircle as RemoveCircleIcon
 } from '@mui/icons-material';
+import CustomModal from '../../components/Common/CustomModal';
 import SearchableSelect from '../../components/Common/SearchableSelect';
 import DataTable from '../../components/Common/DataTable';
 import { useCascadingDropdowns } from '../../hooks/useCascadingDropdowns';
@@ -823,6 +824,7 @@ const EditClientForm = ({ onCancel, data }) => {
 const UploadClientForm = ({ onCancel }) => {
   const [tunjanganTetap, setTunjanganTetap] = useState([]);
   const [tunjanganTidakTetap, setTunjanganTidakTetap] = useState([]);
+  const [isDownloadingTemplate, setIsDownloadingTemplate] = useState(false);
   const { allowances } = useDynamicClientDropdowns();
   
   const tunjanganOptions = [
@@ -1510,19 +1512,6 @@ const MasterClient = () => {
     }
   };
 
-  // const dummyHistoryData = [
-  //   { id: 1, division: 'Youtap Indonesia', unit: 'Youtap Indonesia (PKWT)', position: 'Content Writer', branch: 'JAKARTA', employeeType: 'PKWT', createdDate: '2026-07-08 10:42:37.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
-  //   { id: 2, division: 'Youtap Indonesia', unit: 'Youtap Indonesia (PKWT)', position: 'Content Writer', branch: 'JAKARTA', employeeType: 'PKWT', createdDate: '2026-07-08 10:41:22.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
-  //   { id: 3, division: 'Youtap Indonesia', unit: 'Youtap Indonesia (PKWT)', position: 'Content Writer', branch: 'JAKARTA', employeeType: 'PKWT', createdDate: '2026-07-08 10:40:56.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
-  //   { id: 4, division: 'Yup Paylater', unit: 'Yup Paylater', position: 'Mobile Sales', branch: 'JAKARTA', employeeType: 'MITRA', createdDate: '2026-07-07 11:39:47.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
-  //   { id: 5, division: 'Agriaku Digital Indonesia', unit: 'Agriaku', position: 'Account Executive', branch: 'INDRAMAYU', employeeType: 'PKWT', createdDate: '2026-07-07 10:43:02.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
-  //   { id: 6, division: 'MBA', unit: 'MBA', position: 'Desk Collection', branch: 'JAKARTA', employeeType: 'MAGANG', createdDate: '2026-07-07 10:03:20.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
-  //   { id: 7, division: 'MBA', unit: 'MBA', position: 'Desk Collection', branch: 'JAKARTA', employeeType: 'MAGANG', createdDate: '2026-07-07 10:02:29.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
-  //   { id: 8, division: 'MBA', unit: 'MBA', position: 'Desk Collection', branch: 'JAKARTA', employeeType: 'MAGANG', createdDate: '2026-07-07 10:02:12.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
-  //   { id: 9, division: 'Ananta Nadi Nusantara', unit: 'Ananta Nadi Nusantara', position: 'Sales Merchant Strategic', branch: 'Ponorogo', employeeType: 'PKWT', createdDate: '2026-07-03 14:12:30.0', createdBy: 'Staff HRD', status: 'PROCESSED' },
-  //   { id: 10, division: 'IT, GA & Logistik', unit: 'General Affair/Logistik', position: 'Office Boy', branch: 'BOGOR', employeeType: 'MAGANG', createdDate: '2026-07-03 09:43:12.0', createdBy: 'Staff HRD', status: 'PROCESSED' }
-  // ];
-
   const handleOpenEdit = (row) => {
     setEditData(row);
     setViewMode('editClient');
@@ -1768,14 +1757,7 @@ const MasterClient = () => {
       ) : null}
 
       {/* Dialog ADD Options */}
-      <Dialog open={openAddDialog} onClose={() => setOpenAddDialog(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle sx={{ bgcolor: '#3b82f6', color: 'white', py: 1.5, px: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography sx={{ fontWeight: 600, fontSize: '1rem' }}>Information</Typography>
-          <IconButton onClick={() => setOpenAddDialog(false)} size="small" sx={{ color: 'white' }}>
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ p: 4 }}>
+      <CustomModal open={openAddDialog} onClose={() => setOpenAddDialog(false)} title="Information" maxWidth="xs">
           <Stack direction="row" spacing={2} alignItems="center" justifyContent="center" sx={{ mb: 4 }}>
             <InfoIcon sx={{ color: '#3b82f6', fontSize: 32 }} />
             <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
@@ -1798,16 +1780,10 @@ const MasterClient = () => {
               Upload
             </Button>
           </Stack>
-        </DialogContent>
-      </Dialog>
+      </CustomModal>
 
-      {/* Dialog Log History */}
-      <Dialog open={openHistory} onClose={() => setOpenHistory(false)} maxWidth="lg" fullWidth PaperProps={{ sx: { borderRadius: 2 } }}>
-        <DialogTitle sx={{ bgcolor: '#3b82f6', color: 'white', py: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>History Master Client</Typography>
-          <IconButton onClick={() => setOpenHistory(false)} size="small" sx={{ color: 'white' }}><CloseIcon fontSize="small" /></IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ p: 2 }}>
+      {/* Modal History Log */}
+      <CustomModal open={openHistory} onClose={() => setOpenHistory(false)} title="History Master Client" maxWidth="lg">
           <Stack spacing={2} sx={{ mb: 2, mt: 1 }}>
             <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
               <TextField 
@@ -1856,8 +1832,7 @@ const MasterClient = () => {
               headerColor="#1e293b"
             />
           </Box>
-        </DialogContent>
-      </Dialog>
+      </CustomModal>
 
       {/* Delete Confirmation Dialog */}
       <Dialog
