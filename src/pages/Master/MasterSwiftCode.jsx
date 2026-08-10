@@ -7,39 +7,21 @@ import {
 import {
   Edit as EditIcon,
   Close as CloseIcon,
-  Add as AddIcon,
-  Delete as DeleteIcon
+  Add as AddIcon
 } from '@mui/icons-material';
 import DataTable from '../../components/Common/DataTable';
 import CustomSnackbar from '../../components/Common/CustomSnackbar';
 import CustomConfirmDialog from '../../components/Common/CustomConfirmDialog';
 import CustomModal from '../../components/Common/CustomModal';
+import axios from 'axios';
 
-// Initial Mock Data for Master Banks
-const INITIAL_BANKS = [
-  { id: 1, namaBank: 'STANDARD CHARTERED BANK', kodeSwift: 'SCBLIDJX', kodeBi: '0500306', status: 'Aktif', createdBy: 'SPV HRD', createdDate: '2026-07-29T10:00:00' },
-  { id: 2, namaBank: 'PT BANK PEMBANGUNAN DAERAH PAPUA', kodeSwift: 'PDIJIDJ1', kodeBi: '1320019', status: 'Aktif', createdBy: 'SPV HRD', createdDate: '2026-07-29T10:15:00' },
-  { id: 3, namaBank: 'PT BANK PEMBANGUNAN DAERAH NTT', kodeSwift: 'PDNTIDJA', kodeBi: '1300013', status: 'Aktif', createdBy: 'System', createdDate: '2026-07-29T10:30:00' },
-  { id: 4, namaBank: 'PT BANK PEMBANGUNAN DAERAH MALUKU DAN MALUKU UTARA', kodeSwift: 'PDMLIDJ1', kodeBi: '1310016', status: 'Aktif', createdBy: 'System', createdDate: '2026-07-29T10:45:00' },
-  { id: 5, namaBank: 'PT BANK PEMBANGUNAN DAERAH LAMPUNG', kodeSwift: 'PDLPIDJ1', kodeBi: '1210051', status: 'Aktif', createdBy: 'System', createdDate: '2026-07-29T11:00:00' }
-];
-
-// Initial Mock Data for Bank Aliases
-const INITIAL_ALIASES = [
-  { id: 1, bankId: 1, nama: 'SC Bank', status: 'Aktif', createdBy: 'SPV HRD', createdDate: '2026-07-29T10:05:00' },
-  { id: 2, bankId: 1, nama: 'StanChart', status: 'Aktif', createdBy: 'System', createdDate: '2026-07-29T10:06:00' },
-  { id: 3, bankId: 2, nama: 'Bank Papua', status: 'Aktif', createdBy: 'SPV HRD', createdDate: '2026-07-29T10:20:00' }
-];
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 const MasterSwiftCode = () => {
   const { user } = useSelector((state) => state.auth);
 
-  // Core States (Purely Frontend/Mock)
-  const [banksList, setBanksList] = useState(INITIAL_BANKS);
-  const [aliasesList, setAliasesList] = useState(INITIAL_ALIASES);
-
   // Main list states
-  const [filteredBanks, setFilteredBanks] = useState([]);
+  const [banks, setBanks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [keyword, setKeyword] = useState('');
@@ -56,18 +38,18 @@ const MasterSwiftCode = () => {
   // Form states for Bank
   const [bankForm, setBankForm] = useState({
     namaBank: '',
-    kodeSwift: '',
+    swiftCode: '',
     kodeBi: '',
     status: 'Aktif'
   });
   const [bankErrors, setBankErrors] = useState({
     namaBank: false,
-    kodeSwift: false,
+    swiftCode: false,
     kodeBi: false
   });
 
   // Alias states
-  const [filteredAliases, setFilteredAliases] = useState([]);
+  const [aliases, setAliases] = useState([]);
   const [aliasLoading, setAliasLoading] = useState(false);
   const [aliasPage, setAliasPage] = useState(1);
   const [aliasPageSize, setAliasPageSize] = useState(10);
@@ -79,11 +61,11 @@ const MasterSwiftCode = () => {
   const [openEditAlias, setOpenEditAlias] = useState(false);
   const [selectedAlias, setSelectedAlias] = useState(null);
   const [aliasForm, setAliasForm] = useState({
-    nama: '',
+    namaAlias: '',
     status: 'Aktif'
   });
   const [aliasErrors, setAliasErrors] = useState({
-    nama: false
+    namaAlias: false
   });
 
   // Confirm dialog and snackbar
@@ -94,43 +76,65 @@ const MasterSwiftCode = () => {
     setSnackbar({ open: true, message, severity });
   };
 
-  // Sync / Filter Banks locally
-  useEffect(() => {
+  const fetchBanks = async () => {
     setLoading(true);
-    let result = [...banksList];
-    if (keyword) {
-      const kw = keyword.toLowerCase();
-      result = result.filter(b => 
-        b.namaBank.toLowerCase().includes(kw) || 
-        b.kodeSwift.toLowerCase().includes(kw) || 
-        b.kodeBi.toLowerCase().includes(kw)
-      );
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/master-bank`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          keyword: keyword || undefined,
+          page,
+          size: pageSize
+        }
+      });
+      if (response.data) {
+        setBanks(response.data.data || []);
+        setTotalElements(response.data.totalElements || 0);
+        setTotalPages(response.data.totalPages || 1);
+      }
+    } catch (error) {
+      console.error('Failed to fetch banks:', error);
+      showSnackbar('Gagal mengambil data bank', 'error');
+    } finally {
+      setLoading(false);
     }
-    
-    // Pagination simulation
-    const startIndex = (page - 1) * pageSize;
-    const paginated = result.slice(startIndex, startIndex + pageSize);
-    
-    setFilteredBanks(paginated);
-    setTotalElements(result.length);
-    setTotalPages(Math.ceil(result.length / pageSize) || 1);
-    setLoading(false);
-  }, [banksList, page, pageSize, keyword]);
+  };
 
-  // Sync / Filter Aliases locally
-  useEffect(() => {
-    if (!selectedBank) return;
+  const fetchAliases = async (bankId) => {
+    if (!bankId) return;
     setAliasLoading(true);
-    let result = aliasesList.filter(a => a.bankId === selectedBank.id);
-    
-    const startIndex = (aliasPage - 1) * aliasPageSize;
-    const paginated = result.slice(startIndex, startIndex + aliasPageSize);
-    
-    setFilteredAliases(paginated);
-    setAliasTotalElements(result.length);
-    setAliasTotalPages(Math.ceil(result.length / aliasPageSize) || 1);
-    setAliasLoading(false);
-  }, [aliasesList, selectedBank, aliasPage, aliasPageSize]);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/master-bank/${bankId}/alias`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          page: aliasPage,
+          size: aliasPageSize
+        }
+      });
+      if (response.data) {
+        setAliases(response.data.data || []);
+        setAliasTotalElements(response.data.totalElements || 0);
+        setAliasTotalPages(response.data.totalPages || 1);
+      }
+    } catch (error) {
+      console.error('Failed to fetch aliases:', error);
+      showSnackbar('Gagal mengambil data alias bank', 'error');
+    } finally {
+      setAliasLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBanks();
+  }, [page, pageSize, keyword]);
+
+  useEffect(() => {
+    if (selectedBank) {
+      fetchAliases(selectedBank.id);
+    }
+  }, [selectedBank, aliasPage, aliasPageSize]);
 
   // Handle Search Trigger on Enter key
   const handleKeyDown = (e) => {
@@ -153,136 +157,99 @@ const MasterSwiftCode = () => {
   const validateBankForm = () => {
     const errors = {
       namaBank: !bankForm.namaBank.trim(),
-      kodeSwift: !bankForm.kodeSwift.trim(),
+      swiftCode: !bankForm.swiftCode.trim() && !(bankForm.namaBank.trim().toLowerCase() === 'bca'),
       kodeBi: !bankForm.kodeBi.trim()
     };
     setBankErrors(errors);
     return !Object.values(errors).some(Boolean);
   };
 
-  const handleAddBankSubmit = () => {
+  const handleAddBankSubmit = async () => {
     if (!validateBankForm()) return;
-    
-    const newBank = {
-      id: Date.now(),
-      namaBank: bankForm.namaBank.toUpperCase(),
-      kodeSwift: bankForm.kodeSwift.toUpperCase(),
-      kodeBi: bankForm.kodeBi,
-      status: 'Aktif',
-      createdBy: user?.fullname || 'System',
-      createdDate: new Date().toISOString()
-    };
-
-    setBanksList([newBank, ...banksList]);
-    showSnackbar('Berhasil menambahkan bank baru (Mock)', 'success');
-    setOpenAdd(false);
-    setBankForm({ namaBank: '', kodeSwift: '', kodeBi: '', status: 'Aktif' });
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_URL}/api/master-bank`, bankForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      showSnackbar('Berhasil menambahkan bank baru', 'success');
+      setOpenAdd(false);
+      setBankForm({ namaBank: '', swiftCode: '', kodeBi: '', status: 'Aktif' });
+      fetchBanks();
+    } catch (error) {
+      console.error('Failed to add bank:', error);
+      showSnackbar(error.response?.data?.error || 'Gagal menambahkan bank', 'error');
+    }
   };
 
-  const handleUpdateBankSubmit = () => {
+  const handleUpdateBankSubmit = async () => {
     if (!validateBankForm() || !selectedBank) return;
-    
-    const updated = banksList.map(b => {
-      if (b.id === selectedBank.id) {
-        return {
-          ...b,
-          namaBank: bankForm.namaBank.toUpperCase(),
-          kodeSwift: bankForm.kodeSwift.toUpperCase(),
-          kodeBi: bankForm.kodeBi,
-          status: bankForm.status,
-          modifyBy: user?.fullname || 'System',
-          modifyDate: new Date().toISOString()
-        };
-      }
-      return b;
-    });
-
-    setBanksList(updated);
-    showSnackbar('Berhasil memperbarui data bank (Mock)', 'success');
-    setOpenEdit(false);
-    setSelectedBank(null);
-  };
-
-  const handleDeleteBankClick = (row) => {
-    setConfirmDialog({
-      open: true,
-      title: 'Hapus Bank',
-      message: `Apakah Anda yakin ingin menghapus bank ${row.namaBank}? Semua alias bank yang terhubung juga akan dihapus.`,
-      onConfirm: () => {
-        setBanksList(banksList.filter(b => b.id !== row.id));
-        setAliasesList(aliasesList.filter(a => a.bankId !== row.id));
-        showSnackbar('Berhasil menghapus bank (Mock)', 'success');
-        setConfirmDialog({ ...confirmDialog, open: false });
-      }
-    });
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_URL}/api/master-bank/${selectedBank.id}`, bankForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      showSnackbar('Berhasil memperbarui data bank', 'success');
+      setOpenEdit(false);
+      setSelectedBank(null);
+      fetchBanks();
+    } catch (error) {
+      console.error('Failed to update bank:', error);
+      showSnackbar(error.response?.data?.error || 'Gagal memperbarui bank', 'error');
+    }
   };
 
   // Alias Form Submission
   const validateAliasForm = () => {
     const errors = {
-      nama: !aliasForm.nama.trim()
+      namaAlias: !aliasForm.namaAlias.trim()
     };
     setAliasErrors(errors);
     return !Object.values(errors).some(Boolean);
   };
 
-  const handleAddAliasSubmit = () => {
+  const handleAddAliasSubmit = async () => {
     if (!validateAliasForm() || !selectedBank) return;
-
-    const newAlias = {
-      id: Date.now(),
-      bankId: selectedBank.id,
-      nama: aliasForm.nama,
-      status: 'Aktif',
-      createdBy: user?.fullname || 'System',
-      createdDate: new Date().toISOString()
-    };
-
-    setAliasesList([newAlias, ...aliasesList]);
-    showSnackbar('Berhasil menambahkan alias bank (Mock)', 'success');
-    setOpenAddAlias(false);
-    setAliasForm({ nama: '', status: 'Aktif' });
-    setAliasPage(1);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_URL}/api/master-bank/${selectedBank.id}/alias`, aliasForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      showSnackbar('Berhasil menambahkan alias bank', 'success');
+      setOpenAddAlias(false);
+      setAliasForm({ namaAlias: '', status: 'Aktif' });
+      setAliasPage(1);
+      fetchAliases(selectedBank.id);
+    } catch (error) {
+      console.error('Failed to add alias:', error);
+      showSnackbar(error.response?.data?.error || 'Gagal menambahkan alias', 'error');
+    }
   };
 
-  const handleUpdateAliasSubmit = () => {
+  const handleUpdateAliasSubmit = async () => {
     if (!validateAliasForm() || !selectedAlias || !selectedBank) return;
-
-    const updated = aliasesList.map(a => {
-      if (a.id === selectedAlias.id) {
-        return {
-          ...a,
-          nama: aliasForm.nama,
-          status: aliasForm.status,
-          modifyBy: user?.fullname || 'System',
-          modifyDate: new Date().toISOString()
-        };
-      }
-      return a;
-    });
-
-    setAliasesList(updated);
-    showSnackbar('Berhasil memperbarui alias bank (Mock)', 'success');
-    setOpenEditAlias(false);
-    setSelectedAlias(null);
-  };
-
-  const handleDeleteAliasClick = (aliasRow) => {
-    setConfirmDialog({
-      open: true,
-      title: 'Hapus Alias',
-      message: `Apakah Anda yakin ingin menghapus alias ${aliasRow.nama}?`,
-      onConfirm: () => {
-        setAliasesList(aliasesList.filter(a => a.id !== aliasRow.id));
-        showSnackbar('Berhasil menghapus alias (Mock)', 'success');
-        setConfirmDialog({ ...confirmDialog, open: false });
-      }
-    });
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_URL}/api/master-bank/alias/${selectedAlias.id}`, aliasForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      showSnackbar('Berhasil memperbarui alias bank', 'success');
+      setOpenEditAlias(false);
+      setSelectedAlias(null);
+      fetchAliases(selectedBank.id);
+    } catch (error) {
+      console.error('Failed to update alias:', error);
+      showSnackbar(error.response?.data?.error || 'Gagal memperbarui alias', 'error');
+    }
   };
 
   const formatDateTime = (dt) => {
     if (!dt) return '-';
     return new Date(dt).toLocaleString('id-ID');
+  };
+
+  // Helper function to bypass case sensitivity check for BCA validation in FE
+  const isBca = (name) => {
+    return name ? name.trim().toLowerCase() === 'bca' : false;
   };
 
   return (
@@ -324,8 +291,8 @@ const MasterSwiftCode = () => {
             variant="outlined"
             startIcon={<AddIcon />}
             onClick={() => {
-              setBankForm({ namaBank: '', kodeSwift: '', kodeBi: '', status: 'Aktif' });
-              setBankErrors({ namaBank: false, kodeSwift: false, kodeBi: false });
+              setBankForm({ namaBank: '', swiftCode: '', kodeBi: '', status: 'Aktif' });
+              setBankErrors({ namaBank: false, swiftCode: false, kodeBi: false });
               setOpenAdd(true);
             }}
             sx={{ borderRadius: 2, color: '#3b82f6', borderColor: '#3b82f6', textTransform: 'none', fontWeight: 700 }}
@@ -339,17 +306,17 @@ const MasterSwiftCode = () => {
           columns={[
             { id: 'no', label: 'No', render: (row, i) => ((page - 1) * pageSize) + i + 1 },
             { id: 'namaBank', label: 'Nama Bank' },
-            { id: 'kodeSwift', label: 'Kode SWIFT' },
+            { id: 'swiftCode', label: 'Kode SWIFT', render: (row) => row.swiftCode || '-' },
             { id: 'kodeBi', label: 'Kode BI' },
             {
               id: 'tanggal',
               label: 'Tanggal Input / Update',
-              render: (row) => formatDateTime(row.modifyDate || row.createdDate)
+              render: (row) => formatDateTime(row.tanggalInputUpdate)
             },
             {
               id: 'pic',
               label: 'PIC Input / Update',
-              render: (row) => row.modifyBy || row.createdBy || '-'
+              render: (row) => row.picInputUpdate || '-'
             },
             {
               id: 'status',
@@ -378,11 +345,11 @@ const MasterSwiftCode = () => {
                       setSelectedBank(row);
                       setBankForm({
                         namaBank: row.namaBank,
-                        kodeSwift: row.kodeSwift,
+                        swiftCode: row.swiftCode || '',
                         kodeBi: row.kodeBi,
                         status: row.status
                       });
-                      setBankErrors({ namaBank: false, kodeSwift: false, kodeBi: false });
+                      setBankErrors({ namaBank: false, swiftCode: false, kodeBi: false });
                       setAliasPage(1);
                       setOpenEdit(true);
                     }}
@@ -394,7 +361,7 @@ const MasterSwiftCode = () => {
               )
             }
           ]}
-          data={filteredBanks}
+          data={banks}
           loading={loading}
           page={page}
           pageSize={pageSize}
@@ -423,11 +390,11 @@ const MasterSwiftCode = () => {
           <TextField
             label="Kode SWIFT"
             fullWidth
-            required
-            value={bankForm.kodeSwift}
-            onChange={(e) => setBankForm({ ...bankForm, kodeSwift: e.target.value })}
-            error={bankErrors.kodeSwift}
-            helperText={bankErrors.kodeSwift ? 'Kode SWIFT tidak boleh kosong' : ''}
+            required={bankForm.namaBank.trim().toLowerCase() !== 'bca'}
+            value={bankForm.swiftCode}
+            onChange={(e) => setBankForm({ ...bankForm, swiftCode: e.target.value })}
+            error={bankErrors.swiftCode}
+            helperText={bankErrors.swiftCode ? 'Kode SWIFT tidak boleh kosong (kecuali bank BCA)' : ''}
           />
           <TextField
             label="Kode BI"
@@ -482,10 +449,10 @@ const MasterSwiftCode = () => {
                   label="Kode SWIFT"
                   size="small"
                   fullWidth
-                  required
-                  value={bankForm.kodeSwift}
-                  onChange={(e) => setBankForm({ ...bankForm, kodeSwift: e.target.value })}
-                  error={bankErrors.kodeSwift}
+                  required={bankForm.namaBank.trim().toLowerCase() !== 'bca'}
+                  value={bankForm.swiftCode}
+                  onChange={(e) => setBankForm({ ...bankForm, swiftCode: e.target.value })}
+                  error={bankErrors.swiftCode}
                 />
               </Grid>
               <Grid item xs={12} sm={4}>
@@ -535,8 +502,8 @@ const MasterSwiftCode = () => {
                 size="small"
                 startIcon={<AddIcon />}
                 onClick={() => {
-                  setAliasForm({ nama: '', status: 'Aktif' });
-                  setAliasErrors({ nama: false });
+                  setAliasForm({ namaAlias: '', status: 'Aktif' });
+                  setAliasErrors({ namaAlias: false });
                   setOpenAddAlias(true);
                 }}
                 sx={{ borderRadius: 2, color: '#3b82f6', borderColor: '#3b82f6', textTransform: 'none', fontWeight: 700 }}
@@ -548,16 +515,16 @@ const MasterSwiftCode = () => {
             <DataTable
               columns={[
                 { id: 'no', label: 'No', render: (row, i) => ((aliasPage - 1) * aliasPageSize) + i + 1 },
-                { id: 'nama', label: 'Nama Alias' },
+                { id: 'namaAlias', label: 'Nama Alias' },
                 {
                   id: 'tanggal',
                   label: 'Tanggal Input',
-                  render: (row) => formatDateTime(row.modifyDate || row.createdDate)
+                  render: (row) => formatDateTime(row.createdDate)
                 },
                 {
                   id: 'pic',
                   label: 'PIC',
-                  render: (row) => row.modifyBy || row.createdBy || '-'
+                  render: (row) => row.createdBy || '-'
                 },
                 {
                   id: 'status',
@@ -584,10 +551,10 @@ const MasterSwiftCode = () => {
                       onClick={() => {
                         setSelectedAlias(row);
                         setAliasForm({
-                          nama: row.nama,
+                          namaAlias: row.namaAlias,
                           status: row.status
                         });
-                        setAliasErrors({ nama: false });
+                        setAliasErrors({ namaAlias: false });
                         setOpenEditAlias(true);
                       }}
                       sx={{ color: '#3b82f6' }}
@@ -597,7 +564,7 @@ const MasterSwiftCode = () => {
                   )
                 }
               ]}
-              data={filteredAliases}
+              data={aliases}
               loading={aliasLoading}
               page={aliasPage}
               pageSize={aliasPageSize}
@@ -620,10 +587,10 @@ const MasterSwiftCode = () => {
             label="Nama Alias"
             fullWidth
             required
-            value={aliasForm.nama}
-            onChange={(e) => setAliasForm({ ...aliasForm, nama: e.target.value })}
-            error={aliasErrors.nama}
-            helperText={aliasErrors.nama ? 'Nama alias tidak boleh kosong' : ''}
+            value={aliasForm.namaAlias}
+            onChange={(e) => setAliasForm({ ...aliasForm, namaAlias: e.target.value })}
+            error={aliasErrors.namaAlias}
+            helperText={aliasErrors.namaAlias ? 'Nama alias tidak boleh kosong' : ''}
           />
           <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ pt: 2 }}>
             <Button
@@ -651,10 +618,10 @@ const MasterSwiftCode = () => {
             label="Nama Alias"
             fullWidth
             required
-            value={aliasForm.nama}
-            onChange={(e) => setAliasForm({ ...aliasForm, nama: e.target.value })}
-            error={aliasErrors.nama}
-            helperText={aliasErrors.nama ? 'Nama alias tidak boleh kosong' : ''}
+            value={aliasForm.namaAlias}
+            onChange={(e) => setAliasForm({ ...aliasForm, namaAlias: e.target.value })}
+            error={aliasErrors.namaAlias}
+            helperText={aliasErrors.namaAlias ? 'Nama alias tidak boleh kosong' : ''}
           />
           <FormControl fullWidth>
             <InputLabel>Status</InputLabel>
