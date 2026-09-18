@@ -67,12 +67,15 @@ const CustomConfirmDialog = ({
       onClose={onClose} 
       maxWidth="xs" 
       fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 4,
-          p: 3,
-          textAlign: 'center',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+      disableRestoreFocus
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 4,
+            p: 3,
+            textAlign: 'center',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+          }
         }
       }}
     >
@@ -101,7 +104,7 @@ const CustomConfirmDialog = ({
         </Box>
       </Box>
       
-      <DialogTitle sx={{ fontWeight: 800, fontSize: '1.5rem', p: 0, mb: 2, textAlign: 'center' }}>
+      <DialogTitle component="div" sx={{ fontWeight: 800, fontSize: '1.5rem', p: 0, mb: 2, textAlign: 'center' }}>
         {title}
       </DialogTitle>
       

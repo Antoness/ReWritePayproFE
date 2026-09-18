@@ -1605,91 +1605,282 @@ const MasterClient = () => {
     <Box sx={{ p: 3 }}>
       {viewMode === 'list' ? (
         <>
-          {/* Header */}
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: '#1e293b' }}>Master Client</Typography>
-            <Typography variant="body2" color="text.secondary">Kelola data divisi, unit, posisi, dan branch</Typography>
+          {/* Header Modern 52x52 Badge */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box
+                sx={{
+                  p: 1.5,
+                  borderRadius: 3,
+                  bgcolor: 'primary.main',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 8px 20px rgba(59, 130, 246, 0.3)'
+                }}
+              >
+                <CompareArrowsIcon sx={{ fontSize: 28 }} />
+              </Box>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', letterSpacing: '-0.5px' }}>
+                  Master Client
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
+                  Kelola konfigurasi divisi, unit kerja, posisi, branch, dan komponen payroll client
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+              <Button
+                variant="outlined"
+                startIcon={<HistoryIcon />}
+                onClick={() => setOpenHistory(true)}
+                sx={{
+                  borderRadius: 2.5,
+                  fontWeight: 700,
+                  textTransform: 'none',
+                  px: 2.5,
+                  py: 1,
+                  borderColor: 'divider',
+                  color: 'text.primary',
+                  '&:hover': { bgcolor: 'action.hover' }
+                }}
+              >
+                LOG HISTORY
+              </Button>
+              {role === 'STAFF' && (
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => setOpenAddDialog(true)}
+                  sx={{
+                    borderRadius: 2.5,
+                    fontWeight: 700,
+                    textTransform: 'none',
+                    px: 2.5,
+                    py: 1,
+                    bgcolor: 'primary.main',
+                    boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)',
+                    '&:hover': { bgcolor: 'primary.dark' }
+                  }}
+                >
+                  ADD CLIENT
+                </Button>
+              )}
+            </Box>
+          </Box>
+
+          {/* TOP KPI SUMMARY CARDS */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 2, mb: 3 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                borderRadius: 3,
+                border: '1px solid',
+                borderColor: 'divider',
+                bgcolor: 'background.paper',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                transition: 'all 0.2s',
+                '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }
+              }}
+            >
+              <Box sx={{ p: 1.25, borderRadius: 2.5, bgcolor: 'rgba(59, 130, 246, 0.1)', color: '#2563eb' }}>
+                <CompareArrowsIcon sx={{ fontSize: 26 }} />
+              </Box>
+              <Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase' }}>
+                  Total Client
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary', lineHeight: 1.2 }}>
+                  {totalElements} <Box component="span" sx={{ fontSize: '0.75rem', fontWeight: 500, color: 'text.secondary' }}>records</Box>
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                  Konfigurasi client aktif
+                </Typography>
+              </Box>
+            </Paper>
+
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                borderRadius: 3,
+                border: '1px solid',
+                borderColor: 'divider',
+                bgcolor: 'background.paper',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                transition: 'all 0.2s',
+                '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }
+              }}
+            >
+              <Box sx={{ p: 1.25, borderRadius: 2.5, bgcolor: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+                <InfoIcon sx={{ fontSize: 26 }} />
+              </Box>
+              <Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase' }}>
+                  Division Aktif
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary', lineHeight: 1.2 }}>
+                  {divisions.length} <Box component="span" sx={{ fontSize: '0.75rem', fontWeight: 500, color: 'text.secondary' }}>divisi</Box>
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                  Terdaftar dalam sistem
+                </Typography>
+              </Box>
+            </Paper>
+
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                borderRadius: 3,
+                border: '1px solid',
+                borderColor: 'divider',
+                bgcolor: 'background.paper',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                transition: 'all 0.2s',
+                '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }
+              }}
+            >
+              <Box sx={{ p: 1.25, borderRadius: 2.5, bgcolor: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' }}>
+                <EditIcon sx={{ fontSize: 26 }} />
+              </Box>
+              <Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase' }}>
+                  Position & Unit
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary', lineHeight: 1.2 }}>
+                  {positions.length} <Box component="span" sx={{ fontSize: '0.75rem', fontWeight: 500, color: 'text.secondary' }}>posisi</Box>
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                  {units.length} Unit kerja terhubung
+                </Typography>
+              </Box>
+            </Paper>
+
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                borderRadius: 3,
+                border: '1px solid',
+                borderColor: 'divider',
+                bgcolor: 'background.paper',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                transition: 'all 0.2s',
+                '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }
+              }}
+            >
+              <Box sx={{ p: 1.25, borderRadius: 2.5, bgcolor: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+                <ExportIcon sx={{ fontSize: 26 }} />
+              </Box>
+              <Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase' }}>
+                  Branch Coverage
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary', lineHeight: 1.2 }}>
+                  {branches.length} <Box component="span" sx={{ fontSize: '0.75rem', fontWeight: 500, color: 'text.secondary' }}>cabang</Box>
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                  Distribusi area kerja
+                </Typography>
+              </Box>
+            </Paper>
           </Box>
 
           {/* Filter Panel */}
-          <Paper sx={{ p: 3, mb: 3, borderRadius: 4, bgcolor: '#f1f5f9' }} elevation={0}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.5,
+              mb: 3,
+              borderRadius: 3.5,
+              border: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.02)'
+            }}
+          >
             <Stack spacing={2}>
-              {/* Row 1: Search & Action Buttons */}
-              <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    placeholder="Cari..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    sx={{ bgcolor: 'white', borderRadius: '8px' }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={8}>
-                  <Stack direction="row" spacing={1.5} flexWrap="wrap" sx={{ gap: 1 }}>
-                    <Button variant="contained" sx={{ bgcolor: '#1e293b', textTransform: 'none', fontWeight: 600, borderRadius: '8px', '&:hover': { bgcolor: '#0f172a' } }} onClick={fetchData}>
-                      SEARCH
-                    </Button>
-                    
-                    {role === 'SPV' && (
-                      <Button 
-                        variant="outlined" 
-                        sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px', color: '#3b82f6', borderColor: '#3b82f6', '&:hover': { bgcolor: '#eff6ff' } }}
-                        onClick={() => {
-                          if (selectedIds.length === 0) {
-                            setSnackbar({ open: true, message: 'Pilih/Checklist data terlebih dahulu sebelum melakukan approve!', severity: 'error' });
-                          } else {
-                            setSnackbar({ open: true, message: 'Data berhasil di-approve!', severity: 'success' });
-                            setSelectedIds([]);
-                          }
-                        }}
-                      >
-                        APPROVE
-                      </Button>
-                    )}
+              {/* Row 1: Search, SEARCH button, CLEAR button */}
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr auto' }, gap: 2, alignItems: 'center' }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="Cari Division, Unit, Posisi, atau Branch..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); fetchData(); } }}
+                  InputProps={{
+                    startAdornment: (
+                      <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />
+                    )
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2.5,
+                      bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : '#f8fafc'
+                    }
+                  }}
+                />
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <Button
+                    variant="contained"
+                    onClick={() => { setPage(1); fetchData(); }}
+                    sx={{
+                      bgcolor: '#1e293b',
+                      color: 'white',
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      borderRadius: 2.5,
+                      px: 3,
+                      height: 40,
+                      '&:hover': { bgcolor: '#0f172a' }
+                    }}
+                  >
+                    SEARCH
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={() => {
+                      setSearch('');
+                      setDivision('');
+                      setUnit('');
+                      setPosition('');
+                      setBranch('');
+                      setEmployeeType('');
+                      setStatus('');
+                      setPage(1);
+                    }}
+                    sx={{
+                      borderRadius: 2.5,
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      height: 40,
+                      px: 2.5,
+                      borderColor: 'divider',
+                      color: 'text.secondary',
+                      '&:hover': { bgcolor: 'action.hover' }
+                    }}
+                  >
+                    CLEAR
+                  </Button>
+                </Stack>
+              </Box>
 
-                    {role === 'STAFF' && (
-                      <>
-                        <Button variant="outlined" sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px' }} onClick={() => setOpenAddDialog(true)}>
-                          ADD
-                        </Button>
-                        <Button 
-                          variant="outlined" 
-                          sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px' }}
-                          onClick={() => {
-                            if (selectedIds.length === 0) {
-                              setSnackbar({ open: true, message: 'Pilih/Checklist data terlebih dahulu sebelum melakukan update!', severity: 'error' });
-                            } else {
-                              setViewMode('update');
-                            }
-                          }}
-                        >
-                          UPDATE
-                        </Button>
-                      </>
-                    )}
-
-                    <Button 
-                      variant="outlined" 
-                      sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px' }}
-                      onClick={handleExport}
-                    >
-                      EXPORT
-                    </Button>
-                    <Button 
-                      variant="outlined" 
-                      sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px' }}
-                      onClick={() => setOpenHistory(true)}
-                    >
-                      LOG HISTORY
-                    </Button>
-                  </Stack>
-                </Grid>
-              </Grid>
-
-              {/* Row 2: Filter Dropdowns */}
-              <Stack direction="row" spacing={1.5} flexWrap="wrap">
+              {/* Row 2: Cascading SearchableSelect Filters */}
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: role === 'SPV' ? 'repeat(5, 1fr)' : 'repeat(4, 1fr)' }, gap: 1.5 }}>
                 <SearchableSelect 
                   freeSolo={true}
                   placeholder="(Division)" 
@@ -1699,24 +1890,129 @@ const MasterClient = () => {
                     if (val && divisionError) setDivisionError(false);
                   }} 
                   options={divisions} 
-                  minWidth={160} 
                   error={divisionError}
                   helperText={divisionError ? "Harap di isi" : ""}
                 />
-                <SearchableSelect freeSolo={true} placeholder="(Unit)" value={unit} onChange={setUnit} options={units} minWidth={160} />
-                <SearchableSelect freeSolo={true} placeholder="(Position)" value={position} onChange={setPosition} options={positions} minWidth={160} />
-                <SearchableSelect freeSolo={true} placeholder="(Branch)" value={branch} onChange={setBranch} options={branches} minWidth={160} />
-                {/* <SearchableSelect freeSolo={true} placeholder="(Employee Type)" value={employeeType} onChange={setEmployeeType} options={['REGULER', 'WNA', 'MAGANG']} minWidth={160} /> */}
+                <SearchableSelect freeSolo={true} placeholder="(Unit)" value={unit} onChange={setUnit} options={units} />
+                <SearchableSelect freeSolo={true} placeholder="(Position)" value={position} onChange={setPosition} options={positions} />
+                <SearchableSelect freeSolo={true} placeholder="(Branch)" value={branch} onChange={setBranch} options={branches} />
                 {role === 'SPV' && (
                   <SearchableSelect 
                     placeholder="(Status)" 
                     value={status} 
                     onChange={setStatus} 
                     options={['REQUEST', 'APPROVED', 'REJECTED']} 
-                    minWidth={160} 
                   />
                 )}
-              </Stack>
+              </Box>
+            </Stack>
+          </Paper>
+
+          {/* ACTION TOOLBAR DIRECTLY ABOVE DATATABLE */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 1.5,
+              px: 2,
+              mb: 2,
+              borderRadius: 3,
+              border: '1px solid',
+              borderColor: 'divider',
+              bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.4)' : '#f8fafc',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 1.5
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                Aksi Master Client:
+              </Typography>
+              {selectedIds.length > 0 ? (
+                <Chip
+                  label={`${selectedIds.length} data dipilih`}
+                  size="small"
+                  color="primary"
+                  sx={{ fontWeight: 700, fontSize: '0.75rem', borderRadius: 2 }}
+                />
+              ) : (
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+                  (Pilih checklist baris untuk eksekusi aksi)
+                </Typography>
+              )}
+            </Box>
+
+            <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+              {role === 'SPV' && (
+                <Button 
+                  variant="contained" 
+                  disabled={selectedIds.length === 0}
+                  sx={{ 
+                    textTransform: 'none', 
+                    fontWeight: 700, 
+                    borderRadius: 2.5, 
+                    bgcolor: '#10b981', 
+                    color: 'white',
+                    px: 2.5,
+                    '&:hover': { bgcolor: '#059669' } 
+                  }}
+                  onClick={() => {
+                    if (selectedIds.length === 0) {
+                      setSnackbar({ open: true, message: 'Pilih/Checklist data terlebih dahulu sebelum melakukan approve!', severity: 'error' });
+                    } else {
+                      setSnackbar({ open: true, message: `Berhasil menyetujui ${selectedIds.length} data client!`, severity: 'success' });
+                      setSelectedIds([]);
+                      fetchData();
+                    }
+                  }}
+                >
+                  APPROVE ({selectedIds.length})
+                </Button>
+              )}
+
+              {role === 'STAFF' && (
+                <Button 
+                  variant="outlined" 
+                  disabled={selectedIds.length === 0}
+                  sx={{ 
+                    textTransform: 'none', 
+                    fontWeight: 700, 
+                    borderRadius: 2.5,
+                    px: 2.5,
+                    borderColor: 'primary.main',
+                    color: 'primary.main',
+                    '&:hover': { bgcolor: 'rgba(59, 130, 246, 0.08)' }
+                  }}
+                  onClick={() => {
+                    if (selectedIds.length === 0) {
+                      setSnackbar({ open: true, message: 'Pilih/Checklist data terlebih dahulu sebelum melakukan update!', severity: 'error' });
+                    } else {
+                      setViewMode('update');
+                    }
+                  }}
+                >
+                  UPDATE ({selectedIds.length})
+                </Button>
+              )}
+
+              <Button 
+                variant="outlined" 
+                startIcon={<ExportIcon />}
+                onClick={handleExport}
+                sx={{ 
+                  textTransform: 'none', 
+                  fontWeight: 700, 
+                  borderRadius: 2.5,
+                  px: 2.5,
+                  borderColor: 'divider',
+                  color: 'text.primary',
+                  '&:hover': { bgcolor: 'action.hover' }
+                }}
+              >
+                EXPORT
+              </Button>
             </Stack>
           </Paper>
 
@@ -1731,8 +2027,6 @@ const MasterClient = () => {
             totalPages={totalPages}
             onPageChange={setPage}
             onPageSizeChange={setPageSize}
-            headerBg="#f8fafc"
-            headerColor="#1e293b"
           />
         </>
       ) : viewMode === 'addManual' ? (

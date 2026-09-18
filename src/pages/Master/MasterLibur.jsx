@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import {
-  Box, Typography, Paper, Button, TextField, MenuItem, Select, FormControl,
-  Stack, Grid, IconButton, Dialog, DialogTitle, DialogContent, Alert, CircularProgress, Tooltip
+  Box, Typography, Paper, Button, TextField,
+  Stack, Grid, IconButton, Dialog, DialogTitle, DialogContent, Alert, CircularProgress, Tooltip, InputAdornment
 } from '@mui/material';
 import {
   History as HistoryIcon,
@@ -13,9 +13,16 @@ import {
   Download as DownloadIcon,
   Delete as DeleteIcon,
   CheckCircle as CheckCircleIcon,
-  Remove as RemoveIcon
+  Remove as RemoveIcon,
+  CalendarMonth as LiburIcon,
+  EventBusy as EventBusyIcon,
+  EventAvailable as EventAvailableIcon,
+  Today as TodayIcon,
+  Search as SearchIcon,
+  RestartAlt as ResetIcon
 } from '@mui/icons-material';
 import DataTable from '../../components/Common/DataTable';
+import SearchableSelect from '../../components/Common/SearchableSelect';
 import CustomSnackbar from '../../components/Common/CustomSnackbar';
 import CustomConfirmDialog from '../../components/Common/CustomConfirmDialog';
 import CustomModal from '../../components/Common/CustomModal';
@@ -293,144 +300,303 @@ const MasterLibur = () => {
   };
 
   const columns = [
-    { id: 'no', label: 'No', render: (row, index) => ((page - 1) * pageSize) + index + 1 },
-    { id: 'tanggal', label: 'Tanggal', 
+    {
+      id: 'no',
+      label: 'No',
+      align: 'center',
+      render: (row, index) => ((page - 1) * pageSize) + index + 1
+    },
+    {
+      id: 'tanggal',
+      label: 'Tanggal Libur',
       render: (row) => {
-        if (!row.tanggal) return '';
+        if (!row.tanggal) return '-';
         const d = new Date(row.tanggal);
         const options = { day: '2-digit', month: 'long', year: 'numeric' };
-        return d.toLocaleDateString('en-GB', options).replace(/ /g, '-');
+        const formatted = d.toLocaleDateString('id-ID', options);
+        return (
+          <Typography sx={{ fontWeight: 700, fontSize: '0.82rem', color: 'text.primary' }}>
+            {formatted}
+          </Typography>
+        );
       }
     },
-    { id: 'keterangan', label: 'Keterangan' },
-    { id: 'createdDate', label: 'Created Date' },
-    { id: 'createdBy', label: 'Created By' },
-    { id: 'modifyDate', label: 'Modify Date' },
-    { id: 'modifyBy', label: 'Modify By' },
     {
-      id: 'action', label: 'Action', align: 'center',
+      id: 'keterangan',
+      label: 'Keterangan',
       render: (row) => (
-        <Stack direction="row" spacing={1} justifyContent="center">
-          <IconButton
-            size="small"
-            color="primary"
-            onClick={() => {
-              setSelectedRow(row);
-              setFormData({ tanggal: row.tanggal, keterangan: row.keterangan });
-              setErrors({ tanggal: false, keterangan: false });
-              setOpenEdit(true);
-            }}
-          >
-            <EditIcon fontSize="small" />
-          </IconButton>
-          <IconButton
-            size="small"
-            color="error"
-            onClick={() => handleDelete(row)}
-          >
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        </Stack>
+        <Typography sx={{ fontWeight: 600, fontSize: '0.82rem', color: 'text.primary' }}>
+          {row.keterangan || '-'}
+        </Typography>
+      )
+    },
+    {
+      id: 'createdDate',
+      label: 'Created Date',
+      render: (row) => (
+        <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>
+          {row.createdDate || '-'}
+        </Typography>
+      )
+    },
+    {
+      id: 'createdBy',
+      label: 'Created By',
+      render: (row) => (
+        <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>
+          {row.createdBy || '-'}
+        </Typography>
+      )
+    },
+    {
+      id: 'modifyDate',
+      label: 'Modify Date',
+      render: (row) => (
+        <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>
+          {row.modifyDate || '-'}
+        </Typography>
+      )
+    },
+    {
+      id: 'modifyBy',
+      label: 'Modify By',
+      render: (row) => (
+        <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>
+          {row.modifyBy || '-'}
+        </Typography>
+      )
+    },
+    {
+      id: 'action',
+      label: 'Aksi',
+      align: 'center',
+      render: (row) => (
+        <Box sx={{ display: 'flex', gap: 0.75, justifyContent: 'center' }}>
+          <Tooltip title="Edit Data Libur" arrow>
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedRow(row);
+                setFormData({ tanggal: row.tanggal, keterangan: row.keterangan });
+                setErrors({ tanggal: false, keterangan: false });
+                setOpenEdit(true);
+              }}
+              sx={{
+                bgcolor: 'rgba(16, 185, 129, 0.1)',
+                color: '#10b981',
+                borderRadius: 1.5,
+                p: 0.75,
+                '&:hover': { bgcolor: '#10b981', color: 'white' }
+              }}
+            >
+              <EditIcon sx={{ fontSize: 17 }} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Hapus Data Libur" arrow>
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete(row);
+              }}
+              sx={{
+                bgcolor: 'rgba(239, 68, 68, 0.1)',
+                color: '#ef4444',
+                borderRadius: 1.5,
+                p: 0.75,
+                '&:hover': { bgcolor: '#ef4444', color: 'white' }
+              }}
+            >
+              <DeleteIcon sx={{ fontSize: 17 }} />
+            </IconButton>
+          </Tooltip>
+        </Box>
       )
     }
   ];
 
   return (
-    <Box>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h5" sx={{ fontWeight: 800, color: '#1e293b', mb: 1 }}>
-          Master Libur
-        </Typography>
-        <Typography variant="body2" sx={{ color: '#64748b' }}>
-          Kelola data master hari libur
-        </Typography>
+    <Box sx={{ width: '100%', pb: 4 }}>
+      {/* PAGE HEADER */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box
+            sx={{
+              p: 1.5,
+              borderRadius: 3,
+              bgcolor: 'primary.main',
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 8px 20px rgba(59, 130, 246, 0.3)'
+            }}
+          >
+            <LiburIcon sx={{ fontSize: 28 }} />
+          </Box>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', letterSpacing: '-0.5px' }}>
+              Master Libur
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
+              Kelola data master hari libur nasional, cuti bersama, dan kalender operasional kerja
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Action Buttons Header */}
+        <Box sx={{ display: 'flex', gap: 1.25, flexWrap: 'wrap', alignItems: 'center' }}>
+          <Button
+            variant="outlined"
+            startIcon={<HistoryIcon />}
+            onClick={() => {
+              setHistoryPage(1);
+              fetchHistory();
+              setOpenHistory(true);
+            }}
+            sx={{
+              borderRadius: 2.5,
+              fontWeight: 700,
+              textTransform: 'none',
+              px: 2,
+              py: 0.85,
+              borderColor: 'primary.main',
+              color: 'primary.main',
+              fontSize: '0.82rem',
+              '&:hover': { bgcolor: 'rgba(59, 130, 246, 0.06)' }
+            }}
+          >
+            LOG HISTORY
+          </Button>
+
+          <Button
+            variant="outlined"
+            startIcon={<CloudUploadIcon />}
+            onClick={() => {
+              setUploadFile(null);
+              setOpenUpload(true);
+            }}
+            sx={{
+              borderRadius: 2.5,
+              fontWeight: 700,
+              textTransform: 'none',
+              px: 2,
+              py: 0.85,
+              borderColor: 'primary.main',
+              color: 'primary.main',
+              fontSize: '0.82rem',
+              '&:hover': { bgcolor: 'rgba(59, 130, 246, 0.06)' }
+            }}
+          >
+            UPLOAD MASTER LIBUR
+          </Button>
+
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => {
+              setFormData({ tanggal: '', keterangan: '' });
+              setErrors({ tanggal: false, keterangan: false });
+              setOpenAdd(true);
+            }}
+            sx={{
+              borderRadius: 2.5,
+              fontWeight: 700,
+              textTransform: 'none',
+              px: 2.5,
+              py: 0.95,
+              bgcolor: 'primary.main',
+              boxShadow: '0 4px 14px rgba(59, 130, 246, 0.3)',
+              fontSize: '0.82rem',
+              '&:hover': { bgcolor: 'primary.dark' }
+            }}
+          >
+            ADD +
+          </Button>
+        </Box>
       </Box>
 
-      <Paper sx={{ p: 3, mb: 3, borderRadius: 3, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={6} md={3}>
-            <TextField
-              fullWidth
-              size="small"
-              placeholder="Cari Keterangan..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  setPage(1);
-                  fetchLiburData();
-                }
-              }}
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={3} md={2}>
-            <FormControl fullWidth size="small">
-              <Select value={year} onChange={(e) => setYear(e.target.value)} sx={{ borderRadius: 2 }}>
-                {years.map(y => <MenuItem key={y} value={y}>{y}</MenuItem>)}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={3} md={2}>
-            <FormControl fullWidth size="small">
-              <Select value={month} onChange={(e) => setMonth(e.target.value)} displayEmpty sx={{ borderRadius: 2 }}>
-                <MenuItem value="">(Semua Bulan)</MenuItem>
-                {months.map(m => <MenuItem key={m.value} value={m.value}>{m.label}</MenuItem>)}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={5}>
-            <Stack direction="row" spacing={1}>
-              <Button
-                variant="contained"
-                onClick={() => fetchLiburData()}
-                sx={{ bgcolor: '#3b82f6', color: 'white', '&:hover': { bgcolor: '#2563eb' }, borderRadius: 2, px: 3, fontWeight: 700 }}
-              >
-                SEARCH
-              </Button>
-            </Stack>
-          </Grid>
-        </Grid>
-
-        <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid #e2e8f0' }}>
-          <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
-            <Button
-              variant="outlined"
-              startIcon={<AddIcon />}
-              onClick={() => {
-                setFormData({ tanggal: '', keterangan: '' });
-                setErrors({ tanggal: false, keterangan: false });
-                setOpenAdd(true);
-              }}
-              sx={{ borderRadius: 2, fontWeight: 700, color: '#3b82f6', borderColor: '#3b82f6', '&:hover': { bgcolor: '#f0f9ff' }, textTransform: 'none' }}
-            >
-              +ADD
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<CloudUploadIcon />}
-              onClick={() => setOpenUpload(true)}
-              sx={{ borderRadius: 2, fontWeight: 700, color: '#3b82f6', borderColor: '#3b82f6', '&:hover': { bgcolor: '#f0f9ff' }, textTransform: 'none' }}
-            >
-              UPLOAD MASTER LIBUR
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<HistoryIcon />}
-              onClick={() => {
-                setHistoryPage(1);
-                fetchHistory();
-                setOpenHistory(true);
-              }}
-              sx={{ borderRadius: 2, color: '#6366f1', borderColor: '#6366f1', fontWeight: 600 }}
-            >
-              LOG HISTORY
-            </Button>
-          </Stack>
+      {/* FILTER & SEARCH PANEL */}
+      <Paper sx={{ p: 2.5, mb: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }} elevation={0}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '2fr 1fr 1fr auto auto' }, gap: 1.5, alignItems: 'center' }}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Cari Keterangan Libur..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setPage(1);
+                fetchLiburData();
+              }
+            }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+                  </InputAdornment>
+                )
+              }
+            }}
+          />
+          <SearchableSelect
+            placeholder="(Tahun)"
+            value={year}
+            onChange={(val) => setYear(val || '')}
+            options={years}
+          />
+          <SearchableSelect
+            placeholder="(Bulan)"
+            value={month}
+            onChange={(val) => setMonth(val || '')}
+            options={months}
+          />
+          <Button
+            variant="contained"
+            startIcon={<SearchIcon />}
+            onClick={() => { setPage(1); fetchLiburData(); }}
+            sx={{
+              bgcolor: '#1e293b',
+              color: 'white',
+              '&:hover': { bgcolor: '#0f172a' },
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 700,
+              px: 3,
+              height: '40px'
+            }}
+          >
+            SEARCH
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<ResetIcon />}
+            onClick={() => {
+              setSearch('');
+              setYear(new Date().getFullYear().toString());
+              setMonth('');
+              setPage(1);
+            }}
+            sx={{
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+              px: 2,
+              height: '40px',
+              borderColor: 'divider',
+              color: 'text.secondary',
+              '&:hover': { bgcolor: 'action.hover', borderColor: 'text.secondary' }
+            }}
+          >
+            Reset
+          </Button>
         </Box>
       </Paper>
 
-      <Paper sx={{ p: 3, borderRadius: 3, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+      <Paper sx={{ p: 2.5, borderRadius: 3, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }} elevation={0}>
         <DataTable
           columns={columns}
           data={liburData}

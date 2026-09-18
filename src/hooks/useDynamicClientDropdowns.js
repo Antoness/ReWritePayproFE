@@ -3,6 +3,19 @@ import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
+// Default tunjangan yang SELALU muncul untuk semua klien
+// Ini adalah list tetap yang sudah ada sebelumnya
+const DEFAULT_TUNJANGAN = [
+  'Tunjangan Supervisor',
+  'Tunjangan Jabatan',
+  'Skill Allowance',
+  'Grading Allowance',
+  'Montly Allowance',
+  'Performance Allowance',
+  'Position Allowance',
+  'Tunjangan Bensin',
+];
+
 export const useDynamicClientDropdowns = (selected) => {
   const { division, unit, position, employeeType } = selected || {};
 
@@ -14,7 +27,8 @@ export const useDynamicClientDropdowns = (selected) => {
 
   // Additional static dropdowns
   const [salaryTypes, setSalaryTypes] = useState([]);
-  const [allowances, setAllowances] = useState([]);
+  // Inisialisasi dengan DEFAULT_TUNJANGAN agar tidak pernah kosong
+  const [allowances, setAllowances] = useState([...DEFAULT_TUNJANGAN]);
   const [komponenUpah, setKomponenUpah] = useState([]);
   const [workDays, setWorkDays] = useState([]);
   const [bpjsTkTypes, setBpjsTkTypes] = useState([]);
@@ -28,6 +42,7 @@ export const useDynamicClientDropdowns = (selected) => {
     return { headers: { Authorization: `Bearer ${token}` } };
   };
 
+  // Fetch static dropdowns (salary types, work days, etc.) — hanya sekali
   useEffect(() => {
     const fetchDivisions = async () => {
       try {
@@ -41,12 +56,11 @@ export const useDynamicClientDropdowns = (selected) => {
     const fetchStaticOptions = async () => {
       try {
         const [
-          salaryTypesRes, allowancesRes, komponenUpahRes,
+          salaryTypesRes, komponenUpahRes,
           workDaysRes, bpjsTkTypesRes, metodePajakRes,
           komponenProjectRes, bpjsKetRes, ditanggungOlehRes
         ] = await Promise.all([
           axios.get(`${API_URL}/api/master-client/dropdowns/salary-types`, getHeaders()),
-          axios.get(`${API_URL}/api/master-client/dropdowns/allowances`, getHeaders()),
           axios.get(`${API_URL}/api/master-client/dropdowns/komponen-upah`, getHeaders()),
           axios.get(`${API_URL}/api/master-client/dropdowns/work-days`, getHeaders()),
           axios.get(`${API_URL}/api/master-client/dropdowns/bpjs-tk-types`, getHeaders()),
@@ -57,7 +71,6 @@ export const useDynamicClientDropdowns = (selected) => {
         ]);
         
         setSalaryTypes((salaryTypesRes.data || []).map(o => o.name));
-        setAllowances(allowancesRes.data || []);
         setKomponenUpah((komponenUpahRes.data || []).map(o => o.name));
         setWorkDays(workDaysRes.data || []);
         setBpjsTkTypes(bpjsTkTypesRes.data || []);
@@ -73,6 +86,33 @@ export const useDynamicClientDropdowns = (selected) => {
     fetchDivisions();
     fetchStaticOptions();
   }, []);
+
+  // Fetch allowances (Tunjangan & Insentif) — dynamically filtered by selection
+  // Selalu mulai dari DEFAULT_TUNJANGAN + tambahkan payroll_components dari API
+  useEffect(() => {
+    const fetchAllowances = async () => {
+      try {
+        const params = new URLSearchParams();
+        if (division) params.append('division', division);
+        if (unit) params.append('unitName', unit);
+        if (position) params.append('position', position);
+        if (employeeType) params.append('employeeType', employeeType);
+        const res = await axios.get(
+          `${API_URL}/api/master-client/dropdowns/payroll-components?${params.toString()}`,
+          getHeaders()
+        );
+        // Merge: DEFAULT_TUNJANGAN (selalu ada) + tambahan dari API (filtered), tanpa duplikat
+        const apiItems = res.data || [];
+        const merged = [...new Set([...DEFAULT_TUNJANGAN, ...apiItems])];
+        setAllowances(merged);
+      } catch (error) {
+        console.error('Failed to fetch allowances', error);
+        // Kalau API gagal, tetap pakai defaults saja
+        setAllowances([...DEFAULT_TUNJANGAN]);
+      }
+    };
+    fetchAllowances();
+  }, [division, unit, position, employeeType]);
 
   useEffect(() => {
     const fetchUnits = async () => {

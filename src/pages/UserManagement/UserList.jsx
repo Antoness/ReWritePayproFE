@@ -15,6 +15,7 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 import CustomConfirmDialog from '../../components/Common/CustomConfirmDialog';
+import SearchableSelect from '../../components/Common/SearchableSelect';
 
 const API_URL = import.meta.env.VITE_API_URL || import.meta.env.REACT_APP_API_URL || 'http://localhost:8080';
 
@@ -68,8 +69,20 @@ const UserList = () => {
     }
   };
 
+  const [rolesList, setRolesList] = useState([]);
+
+  const fetchRolesList = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/roles`);
+      setRolesList(response.data || []);
+    } catch (error) {
+      console.error('Error fetching roles list:', error);
+    }
+  };
+
   useEffect(() => {
     fetchUsers(search, page, pageSize);
+    fetchRolesList();
   }, [page, pageSize]);
 
   const handleSearch = () => {
@@ -214,11 +227,28 @@ const UserList = () => {
 
       {/* Toolbar Search & Reset */}
       <Paper sx={{ p: 2.5, mb: 3, borderRadius: 4 }} elevation={0} className="glass-card">
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={6}>
-            <TextField fullWidth size="small" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleSearch()} InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ color: 'primary.main', fontSize: 20 }} /></InputAdornment>, sx: { borderRadius: '10px', bgcolor: 'white' } }} />
-          </Grid>
-          <Grid item xs={12} md={6}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, alignItems: 'center' }}>
+          <Box>
+            <TextField 
+              fullWidth 
+              size="small" 
+              placeholder="Search..." 
+              value={search} 
+              onChange={(e) => setSearch(e.target.value)} 
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()} 
+              slotProps={{ 
+                input: { 
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: 'primary.main', fontSize: 20 }} />
+                    </InputAdornment>
+                  ), 
+                  sx: { borderRadius: '10px', bgcolor: 'white' } 
+                } 
+              }} 
+            />
+          </Box>
+          <Box>
             <Stack direction="row" spacing={1.5} justifyContent="flex-end">
               <Button variant="contained" onClick={handleSearch} sx={{ bgcolor: '#1e293b', color: 'white', borderRadius: '10px', px: 3 }}>Search</Button>
               <Button 
@@ -231,8 +261,8 @@ const UserList = () => {
                 Reset Password ({selected.length})
               </Button>
             </Stack>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </Paper>
 
       <TableContainer component={Paper} sx={{ borderRadius: 4, overflow: 'hidden', border: '1px solid #e2e8f0', minHeight: '400px' }} elevation={0}>
@@ -281,9 +311,16 @@ const UserList = () => {
       </TableContainer>
 
       {/* Modal Add/Edit */}
-      <Dialog open={openModal} onClose={() => setOpenModal(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-        <DialogTitle sx={{ background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)', color: 'white', display: 'flex', justifyContent: 'space-between' }}>
-          <Typography variant="h6" sx={{ fontWeight: 800 }}>{editMode ? 'Update User Account' : 'Create New User Account'}</Typography>
+      <Dialog 
+        open={openModal} 
+        onClose={() => setOpenModal(false)} 
+        maxWidth="sm" 
+        fullWidth 
+        disableRestoreFocus
+        slotProps={{ paper: { sx: { borderRadius: 4 } } }}
+      >
+        <DialogTitle component="div" sx={{ background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)', color: 'white', display: 'flex', justifyContent: 'space-between' }}>
+          <Typography component="div" sx={{ fontWeight: 800, fontSize: '1.2rem' }}>{editMode ? 'Update User Account' : 'Create New User Account'}</Typography>
           <IconButton onClick={() => setOpenModal(false)} sx={{ color: 'white' }}><CloseIcon /></IconButton>
         </DialogTitle>
         <DialogContent sx={{ p: 4 }}>
@@ -293,7 +330,21 @@ const UserList = () => {
             <TextField fullWidth label="Email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
             <TextField fullWidth label="Username" value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value })} />
             <TextField fullWidth label="Password" type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
-            <TextField select fullWidth label="Position" value={formData.position} onChange={(e) => setFormData({ ...formData, position: e.target.value })}><MenuItem value="Manajer">Manajer</MenuItem><MenuItem value="SPV">SPV</MenuItem><MenuItem value="Staff">Staff</MenuItem></TextField>
+            <TextField select fullWidth label="Position" value={formData.position} onChange={(e) => setFormData({ ...formData, position: e.target.value })}>
+              {rolesList.length === 0 ? (
+                <>
+                  <MenuItem value="Manajer">Manajer</MenuItem>
+                  <MenuItem value="SPV">SPV</MenuItem>
+                  <MenuItem value="Staff">Staff</MenuItem>
+                </>
+              ) : (
+                rolesList.map((r) => (
+                  <MenuItem key={r.id} value={r.name}>
+                    {r.name}
+                  </MenuItem>
+                ))
+              )}
+            </TextField>
             <TextField fullWidth label="Division" value={formData.division} onChange={(e) => setFormData({ ...formData, division: e.target.value })} />
             <TextField select fullWidth label="Upliner" value={formData.upliner} onChange={(e) => setFormData({ ...formData, upliner: e.target.value })}><MenuItem value="">None</MenuItem><MenuItem value="admin">Admin</MenuItem><MenuItem value="SPV HRD">SPV HRD</MenuItem></TextField>
             {editMode && (
@@ -308,19 +359,32 @@ const UserList = () => {
       </Dialog>
 
       {/* Modal Add User Approval */}
-      <Dialog open={openApprovalModal} onClose={() => { setOpenApprovalModal(false); fetchUsers(search, page, pageSize); }} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-        <DialogTitle sx={{ background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)', color: 'white', display: 'flex', justifyContent: 'space-between' }}>
-          <Typography variant="h6" sx={{ fontWeight: 800 }}>Add User Approval</Typography>
+      <Dialog 
+        open={openApprovalModal} 
+        onClose={() => { setOpenApprovalModal(false); fetchUsers(search, page, pageSize); }} 
+        maxWidth="sm" 
+        fullWidth 
+        disableRestoreFocus
+        slotProps={{ paper: { sx: { borderRadius: 4 } } }}
+      >
+        <DialogTitle component="div" sx={{ background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)', color: 'white', display: 'flex', justifyContent: 'space-between' }}>
+          <Typography component="div" sx={{ fontWeight: 800, fontSize: '1.2rem' }}>Add User Approval</Typography>
           <IconButton onClick={() => { setOpenApprovalModal(false); fetchUsers(search, page, pageSize); }} sx={{ color: 'white' }}><CloseIcon /></IconButton>
         </DialogTitle>
         <DialogContent sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'center', mt: 1 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Upliner Approval</InputLabel>
-              <Select label="Upliner Approval" value={selectedUpliner} onChange={(e) => setSelectedUpliner(e.target.value)}>
-                {potentialUpliners.map((u) => <MenuItem key={u.nik} value={u.nik}>{u.fullName}</MenuItem>)}
-              </Select>
-            </FormControl>
+            <Box sx={{ flex: 1 }}>
+              <SearchableSelect
+                placeholder="Pilih Upliner Approval..."
+                label="Upliner Approval"
+                value={selectedUpliner}
+                onChange={(val) => setSelectedUpliner(val || '')}
+                options={potentialUpliners.map((u) => ({
+                  label: `${u.nik} - ${u.fullName}`,
+                  value: u.nik
+                }))}
+              />
+            </Box>
             <Button variant="contained" onClick={handleSaveUpliner} sx={{ px: 4, height: '40px' }}>Save</Button>
           </Box>
           <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>

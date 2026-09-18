@@ -6,8 +6,13 @@ import {
 } from '@mui/material';
 import {
   Edit as EditIcon,
-  Close as CloseIcon,
-  Add as AddIcon
+  Add as AddIcon,
+  AccountBalance as AccountBalanceIcon,
+  CheckCircle as CheckCircleIcon,
+  Cancel as CancelIcon,
+  SwapHoriz as SwapHorizIcon,
+  Search as SearchIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import DataTable from '../../components/Common/DataTable';
 import CustomSnackbar from '../../components/Common/CustomSnackbar';
@@ -136,7 +141,6 @@ const MasterSwiftCode = () => {
     }
   }, [selectedBank, aliasPage, aliasPageSize]);
 
-  // Handle Search Trigger on Enter key
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       setKeyword(search);
@@ -144,7 +148,6 @@ const MasterSwiftCode = () => {
     }
   };
 
-  // Reset search when input is empty
   const handleSearchChange = (val) => {
     setSearch(val);
     if (val === '') {
@@ -153,7 +156,6 @@ const MasterSwiftCode = () => {
     }
   };
 
-  // Bank Form Submission
   const validateBankForm = () => {
     const errors = {
       namaBank: !bankForm.namaBank.trim(),
@@ -198,7 +200,6 @@ const MasterSwiftCode = () => {
     }
   };
 
-  // Alias Form Submission
   const validateAliasForm = () => {
     const errors = {
       namaAlias: !aliasForm.namaAlias.trim()
@@ -247,192 +248,326 @@ const MasterSwiftCode = () => {
     return new Date(dt).toLocaleString('id-ID');
   };
 
-  // Helper function to bypass case sensitivity check for BCA validation in FE
-  const isBca = (name) => {
-    return name ? name.trim().toLowerCase() === 'bca' : false;
-  };
+  const activeCount = banks.filter(b => b.status === 'Aktif').length;
+  const inactiveCount = banks.filter(b => b.status !== 'Aktif').length;
 
   return (
-    <Box sx={{ p: 4, bgcolor: '#f8fafc', minHeight: '100vh' }}>
-      {/* Title */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h5" sx={{ fontWeight: 800, color: '#1e293b' }}>
-          Master Swift Code
-        </Typography>
-        <Typography variant="body2" sx={{ color: '#64748b' }}>
-          Kelola kode SWIFT bank dan alias nama bank
-        </Typography>
+    <Box sx={{ p: { xs: 2, md: 3 } }}>
+      {/* Header Banner */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+        <Box sx={{
+          width: 52,
+          height: 52,
+          borderRadius: '16px',
+          background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          boxShadow: '0 8px 16px -4px rgba(99, 102, 241, 0.4)'
+        }}>
+          <AccountBalanceIcon sx={{ fontSize: 28 }} />
+        </Box>
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', letterSpacing: '-0.02em' }}>
+            Master Swift Code & Bank
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Kelola kode SWIFT bank, kode BI kliring, dan alias nama rekening payroll
+          </Typography>
+        </Box>
       </Box>
 
-      {/* Main card */}
-      <Paper sx={{ p: 3, borderRadius: 3, border: '1px solid #e2e8f0', mb: 4 }} elevation={0}>
-        <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-          {/* Search bar */}
-          <Stack direction="row" spacing={1.5} alignItems="center">
+      {/* KPI Cards */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 2, borderRadius: '16px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', gap: 2 }} elevation={0}>
+            <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4338ca' }}>
+              <AccountBalanceIcon sx={{ fontSize: 24 }} />
+            </Box>
+            <Box>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>Total Bank Terdaftar</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary' }}>{totalElements} Bank</Typography>
+            </Box>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 2, borderRadius: '16px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', gap: 2 }} elevation={0}>
+            <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669' }}>
+              <CheckCircleIcon sx={{ fontSize: 24 }} />
+            </Box>
+            <Box>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>Bank Aktif</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: '#10b981' }}>{activeCount} Bank</Typography>
+            </Box>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 2, borderRadius: '16px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', gap: 2 }} elevation={0}>
+            <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#dc2626' }}>
+              <CancelIcon sx={{ fontSize: 24 }} />
+            </Box>
+            <Box>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>Bank Non-Aktif</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary' }}>{inactiveCount} Bank</Typography>
+            </Box>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 2, borderRadius: '16px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', gap: 2 }} elevation={0}>
+            <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7c3aed' }}>
+              <SwapHorizIcon sx={{ fontSize: 24 }} />
+            </Box>
+            <Box>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>Sistem Kliring</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary' }}>BI-FAST / SKN</Typography>
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* Search Toolbar */}
+      <Paper sx={{ p: 2.5, mb: 3, borderRadius: '16px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }} elevation={0}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} md={6}>
             <TextField
+              fullWidth
               size="small"
-              placeholder="Cari Nama Bank, Swift, BI..."
+              placeholder="Cari Nama Bank, Kode SWIFT, Kode BI..."
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
               onKeyDown={handleKeyDown}
-              sx={{ width: 280 }}
+              InputProps={{
+                startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />
+              }}
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
             />
-            <Button
-              variant="contained"
-              onClick={() => { setKeyword(search); setPage(1); }}
-              sx={{ bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' }, borderRadius: 2, textTransform: 'none', fontWeight: 700 }}
-            >
-              SEARCH
-            </Button>
-          </Stack>
-
-          {/* Add Button */}
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={() => {
-              setBankForm({ namaBank: '', swiftCode: '', kodeBi: '', status: 'Aktif' });
-              setBankErrors({ namaBank: false, swiftCode: false, kodeBi: false });
-              setOpenAdd(true);
-            }}
-            sx={{ borderRadius: 2, color: '#3b82f6', borderColor: '#3b82f6', textTransform: 'none', fontWeight: 700 }}
-          >
-            +ADD
-          </Button>
-        </Stack>
-
-        {/* Data Table */}
-        <DataTable
-          columns={[
-            { id: 'no', label: 'No', render: (row, i) => ((page - 1) * pageSize) + i + 1 },
-            { id: 'namaBank', label: 'Nama Bank' },
-            { id: 'swiftCode', label: 'Kode SWIFT', render: (row) => row.swiftCode || '-' },
-            { id: 'kodeBi', label: 'Kode BI' },
-            {
-              id: 'tanggal',
-              label: 'Tanggal Input / Update',
-              render: (row) => formatDateTime(row.tanggalInputUpdate)
-            },
-            {
-              id: 'pic',
-              label: 'PIC Input / Update',
-              render: (row) => row.picInputUpdate || '-'
-            },
-            {
-              id: 'status',
-              label: 'Status',
-              render: (row) => (
-                <Chip
-                  label={row.status}
-                  size="small"
-                  sx={{
-                    bgcolor: row.status === 'Aktif' ? '#ecfdf5' : '#fef2f2',
-                    color: row.status === 'Aktif' ? '#059669' : '#dc2626',
-                    fontWeight: 700,
-                    borderRadius: 1.5
-                  }}
-                />
-              )
-            },
-            {
-              id: 'actions',
-              label: 'Aksi',
-              render: (row) => (
-                <Tooltip title="Edit Bank & Alias">
-                  <IconButton
-                    size="small"
-                    onClick={() => {
-                      setSelectedBank(row);
-                      setBankForm({
-                        namaBank: row.namaBank,
-                        swiftCode: row.swiftCode || '',
-                        kodeBi: row.kodeBi,
-                        status: row.status
-                      });
-                      setBankErrors({ namaBank: false, swiftCode: false, kodeBi: false });
-                      setAliasPage(1);
-                      setOpenEdit(true);
-                    }}
-                    sx={{ color: '#3b82f6' }}
-                  >
-                    <EditIcon sx={{ fontSize: 18 }} />
-                  </IconButton>
-                </Tooltip>
-              )
-            }
-          ]}
-          data={banks}
-          loading={loading}
-          page={page}
-          pageSize={pageSize}
-          totalElements={totalElements}
-          totalPages={totalPages}
-          onPageChange={setPage}
-          onPageSizeChange={(size) => {
-            setPageSize(size);
-            setPage(1);
-          }}
-        />
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <Stack direction="row" spacing={1.5}>
+              <Button
+                fullWidth
+                variant="contained"
+                onClick={() => { setKeyword(search); setPage(1); }}
+                sx={{
+                  bgcolor: '#1e293b',
+                  '&:hover': { bgcolor: '#0f172a' },
+                  borderRadius: '10px',
+                  height: '40px',
+                  fontWeight: 700,
+                  boxShadow: 'none'
+                }}
+              >
+                SEARCH
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => { setSearch(''); setKeyword(''); setPage(1); }}
+                sx={{
+                  borderRadius: '10px',
+                  height: '40px',
+                  color: 'text.secondary',
+                  borderColor: 'divider',
+                  '&:hover': { borderColor: 'text.primary' }
+                }}
+              >
+                <RefreshIcon fontSize="small" />
+              </Button>
+            </Stack>
+          </Grid>
+        </Grid>
       </Paper>
 
+      {/* Action Toolbar Directly Above Table */}
+      <Paper sx={{ p: 2, mb: 2, borderRadius: '14px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }} elevation={0}>
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'text.primary' }}>
+            Daftar Kode SWIFT & Bank
+          </Typography>
+          <Chip label={`${totalElements} Bank`} size="small" sx={{ bgcolor: 'action.hover', fontWeight: 700, borderRadius: '6px' }} />
+        </Stack>
+
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => {
+            setBankForm({ namaBank: '', swiftCode: '', kodeBi: '', status: 'Aktif' });
+            setBankErrors({ namaBank: false, swiftCode: false, kodeBi: false });
+            setOpenAdd(true);
+          }}
+          sx={{
+            borderRadius: '10px',
+            fontWeight: 700,
+            bgcolor: '#3b82f6',
+            '&:hover': { bgcolor: '#2563eb' },
+            boxShadow: 'none'
+          }}
+        >
+          + TAMBAH BANK
+        </Button>
+      </Paper>
+
+      {/* Data Table */}
+      <DataTable
+        columns={[
+          { id: 'no', label: 'No', render: (row, i) => ((page - 1) * pageSize) + i + 1 },
+          { 
+            id: 'namaBank', 
+            label: 'Nama Bank',
+            render: (row) => <Typography sx={{ fontWeight: 700, color: 'text.primary' }}>{row.namaBank}</Typography>
+          },
+          { 
+            id: 'swiftCode', 
+            label: 'Kode SWIFT', 
+            render: (row) => (
+              <Chip 
+                label={row.swiftCode || '-'} 
+                size="small" 
+                sx={{ fontFamily: 'monospace', fontWeight: 700, bgcolor: 'action.hover', borderRadius: '6px' }} 
+              />
+            )
+          },
+          { 
+            id: 'kodeBi', 
+            label: 'Kode BI',
+            render: (row) => (
+              <Typography sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{row.kodeBi || '-'}</Typography>
+            )
+          },
+          {
+            id: 'tanggal',
+            label: 'Tanggal Input / Update',
+            render: (row) => formatDateTime(row.tanggalInputUpdate)
+          },
+          {
+            id: 'pic',
+            label: 'PIC Input / Update',
+            render: (row) => row.picInputUpdate || '-'
+          },
+          {
+            id: 'status',
+            label: 'Status',
+            render: (row) => (
+              <Chip
+                label={row.status}
+                size="small"
+                sx={{
+                  bgcolor: row.status === 'Aktif' ? '#ecfdf5' : '#fef2f2',
+                  color: row.status === 'Aktif' ? '#059669' : '#dc2626',
+                  fontWeight: 700,
+                  borderRadius: '6px'
+                }}
+              />
+            )
+          },
+          {
+            id: 'actions',
+            label: 'Aksi',
+            align: 'center',
+            render: (row) => (
+              <Tooltip title="Edit Bank & Alias">
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setSelectedBank(row);
+                    setBankForm({
+                      namaBank: row.namaBank,
+                      swiftCode: row.swiftCode || '',
+                      kodeBi: row.kodeBi,
+                      status: row.status
+                    });
+                    setBankErrors({ namaBank: false, swiftCode: false, kodeBi: false });
+                    setAliasPage(1);
+                    setOpenEdit(true);
+                  }}
+                  sx={{ bgcolor: '#eff6ff', color: '#3b82f6', '&:hover': { bgcolor: '#dbeafe' }, borderRadius: '8px' }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )
+          }
+        ]}
+        data={banks}
+        loading={loading}
+        page={page}
+        pageSize={pageSize}
+        totalElements={totalElements}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setPage(1);
+        }}
+      />
+
       {/* Add Bank Modal */}
-      <CustomModal open={openAdd} onClose={() => setOpenAdd(false)} title="Add Bank">
-        <Stack spacing={3} sx={{ mt: 1 }}>
+      <CustomModal open={openAdd} onClose={() => setOpenAdd(false)} title="Tambah Data Bank Baru">
+        <Stack spacing={2.5} sx={{ mt: 1 }}>
           <TextField
             label="Nama Bank"
             fullWidth
+            size="small"
             required
+            placeholder="Contoh: BANK CENTRAL ASIA"
             value={bankForm.namaBank}
             onChange={(e) => setBankForm({ ...bankForm, namaBank: e.target.value })}
             error={bankErrors.namaBank}
             helperText={bankErrors.namaBank ? 'Nama Bank tidak boleh kosong' : ''}
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
           />
           <TextField
             label="Kode SWIFT"
             fullWidth
+            size="small"
             required={bankForm.namaBank.trim().toLowerCase() !== 'bca'}
+            placeholder="Contoh: CENAIDJA"
             value={bankForm.swiftCode}
             onChange={(e) => setBankForm({ ...bankForm, swiftCode: e.target.value })}
             error={bankErrors.swiftCode}
             helperText={bankErrors.swiftCode ? 'Kode SWIFT tidak boleh kosong (kecuali bank BCA)' : ''}
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
           />
           <TextField
-            label="Kode BI"
+            label="Kode BI Kliring"
             fullWidth
+            size="small"
             required
+            placeholder="Contoh: 014"
             value={bankForm.kodeBi}
             onChange={(e) => setBankForm({ ...bankForm, kodeBi: e.target.value })}
             error={bankErrors.kodeBi}
             helperText={bankErrors.kodeBi ? 'Kode BI tidak boleh kosong' : ''}
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
           />
           <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ pt: 2 }}>
             <Button
               variant="outlined"
               onClick={() => setOpenAdd(false)}
-              sx={{ borderRadius: 2, color: '#64748b', borderColor: '#cbd5e1', textTransform: 'none', fontWeight: 700 }}
+              sx={{ borderRadius: '8px', color: 'text.secondary', borderColor: 'divider', textTransform: 'none', fontWeight: 700 }}
             >
-              Cancel
+              Batal
             </Button>
             <Button
               variant="contained"
               onClick={handleAddBankSubmit}
-              sx={{ bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' }, borderRadius: 2, textTransform: 'none', fontWeight: 700 }}
+              sx={{ bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' }, borderRadius: '8px', textTransform: 'none', fontWeight: 700, boxShadow: 'none' }}
             >
-              ADD
+              SIMPAN
             </Button>
           </Stack>
         </Stack>
       </CustomModal>
 
       {/* Edit Bank & Alias Modal */}
-      <CustomModal open={openEdit} onClose={() => setOpenEdit(false)} title="Edit Bank & Alias" maxWidth="md">
-        <Stack spacing={4}>
+      <CustomModal open={openEdit} onClose={() => setOpenEdit(false)} title="Edit Bank & Konfigurasi Alias" maxWidth="md">
+        <Stack spacing={3}>
           {/* Upper Section: Master Bank Details */}
-          <Paper sx={{ p: 2.5, borderRadius: 2, border: '1px solid #e2e8f0', bgcolor: '#f8fafc' }} elevation={0}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#1e293b', mb: 2 }}>
-              Master Bank Details
+          <Paper sx={{ p: 2.5, borderRadius: '12px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }} elevation={0}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'text.primary', mb: 2 }}>
+              Informasi Master Bank
             </Typography>
-            <Grid container spacing={3}>
+            <Grid container spacing={2.5}>
               <Grid item xs={12}>
                 <TextField
                   label="Nama Bank"
@@ -442,6 +577,7 @@ const MasterSwiftCode = () => {
                   value={bankForm.namaBank}
                   onChange={(e) => setBankForm({ ...bankForm, namaBank: e.target.value })}
                   error={bankErrors.namaBank}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
                 />
               </Grid>
               <Grid item xs={12} sm={4}>
@@ -453,17 +589,19 @@ const MasterSwiftCode = () => {
                   value={bankForm.swiftCode}
                   onChange={(e) => setBankForm({ ...bankForm, swiftCode: e.target.value })}
                   error={bankErrors.swiftCode}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
                 />
               </Grid>
               <Grid item xs={12} sm={4}>
                 <TextField
-                  label="Kode BI"
+                  label="Kode BI Kliring"
                   size="small"
                   fullWidth
                   required
                   value={bankForm.kodeBi}
                   onChange={(e) => setBankForm({ ...bankForm, kodeBi: e.target.value })}
                   error={bankErrors.kodeBi}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
                 />
               </Grid>
               <Grid item xs={12} sm={4}>
@@ -473,6 +611,7 @@ const MasterSwiftCode = () => {
                     value={bankForm.status}
                     label="Status"
                     onChange={(e) => setBankForm({ ...bankForm, status: e.target.value })}
+                    sx={{ borderRadius: '8px' }}
                   >
                     <MenuItem value="Aktif">Aktif</MenuItem>
                     <MenuItem value="Non Aktif">Non Aktif</MenuItem>
@@ -480,13 +619,13 @@ const MasterSwiftCode = () => {
                 </FormControl>
               </Grid>
             </Grid>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2.5 }}>
               <Button
                 variant="contained"
                 onClick={handleUpdateBankSubmit}
-                sx={{ bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' }, borderRadius: 2, textTransform: 'none', fontWeight: 700 }}
+                sx={{ bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' }, borderRadius: '8px', textTransform: 'none', fontWeight: 700, boxShadow: 'none' }}
               >
-                UPDATE MASTER
+                UPDATE BANK
               </Button>
             </Box>
           </Paper>
@@ -494,8 +633,8 @@ const MasterSwiftCode = () => {
           {/* Lower Section: Bank Alias List */}
           <Stack spacing={2}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#1e293b' }}>
-                Bank Alias List
+              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'text.primary' }}>
+                Daftar Alias Nama Bank
               </Typography>
               <Button
                 variant="outlined"
@@ -506,9 +645,9 @@ const MasterSwiftCode = () => {
                   setAliasErrors({ namaAlias: false });
                   setOpenAddAlias(true);
                 }}
-                sx={{ borderRadius: 2, color: '#3b82f6', borderColor: '#3b82f6', textTransform: 'none', fontWeight: 700 }}
+                sx={{ borderRadius: '8px', color: '#3b82f6', borderColor: '#3b82f6', textTransform: 'none', fontWeight: 700 }}
               >
-                +ADD
+                + TAMBAH ALIAS
               </Button>
             </Box>
 
@@ -537,7 +676,7 @@ const MasterSwiftCode = () => {
                         bgcolor: row.status === 'Aktif' ? '#ecfdf5' : '#fef2f2',
                         color: row.status === 'Aktif' ? '#059669' : '#dc2626',
                         fontWeight: 700,
-                        borderRadius: 1.5
+                        borderRadius: '6px'
                       }}
                     />
                   )
@@ -545,6 +684,7 @@ const MasterSwiftCode = () => {
                 {
                   id: 'actions',
                   label: 'Aksi',
+                  align: 'center',
                   render: (row) => (
                     <IconButton
                       size="small"
@@ -557,7 +697,7 @@ const MasterSwiftCode = () => {
                         setAliasErrors({ namaAlias: false });
                         setOpenEditAlias(true);
                       }}
-                      sx={{ color: '#3b82f6' }}
+                      sx={{ bgcolor: '#eff6ff', color: '#3b82f6', '&:hover': { bgcolor: '#dbeafe' }, borderRadius: '8px' }}
                     >
                       <EditIcon sx={{ fontSize: 16 }} />
                     </IconButton>
@@ -581,54 +721,60 @@ const MasterSwiftCode = () => {
       </CustomModal>
 
       {/* Sub-modal: Add Alias */}
-      <CustomModal open={openAddAlias} onClose={() => setOpenAddAlias(false)} title="Add Bank Alias">
-        <Stack spacing={3} sx={{ mt: 1 }}>
+      <CustomModal open={openAddAlias} onClose={() => setOpenAddAlias(false)} title="Tambah Alias Nama Bank">
+        <Stack spacing={2.5} sx={{ mt: 1 }}>
           <TextField
             label="Nama Alias"
             fullWidth
+            size="small"
             required
+            placeholder="Contoh: BCA CABANG JAKARTA"
             value={aliasForm.namaAlias}
             onChange={(e) => setAliasForm({ ...aliasForm, namaAlias: e.target.value })}
             error={aliasErrors.namaAlias}
             helperText={aliasErrors.namaAlias ? 'Nama alias tidak boleh kosong' : ''}
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
           />
           <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ pt: 2 }}>
             <Button
               variant="outlined"
               onClick={() => setOpenAddAlias(false)}
-              sx={{ borderRadius: 2, color: '#64748b', borderColor: '#cbd5e1', textTransform: 'none', fontWeight: 700 }}
+              sx={{ borderRadius: '8px', color: 'text.secondary', borderColor: 'divider', textTransform: 'none', fontWeight: 700 }}
             >
-              Cancel
+              Batal
             </Button>
             <Button
               variant="contained"
               onClick={handleAddAliasSubmit}
-              sx={{ bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' }, borderRadius: 2, textTransform: 'none', fontWeight: 700 }}
+              sx={{ bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' }, borderRadius: '8px', textTransform: 'none', fontWeight: 700, boxShadow: 'none' }}
             >
-              ADD
+              SIMPAN ALIAS
             </Button>
           </Stack>
         </Stack>
       </CustomModal>
 
       {/* Sub-modal: Edit Alias */}
-      <CustomModal open={openEditAlias} onClose={() => setOpenEditAlias(false)} title="Edit Bank Alias">
-        <Stack spacing={3} sx={{ mt: 1 }}>
+      <CustomModal open={openEditAlias} onClose={() => setOpenEditAlias(false)} title="Edit Alias Nama Bank">
+        <Stack spacing={2.5} sx={{ mt: 1 }}>
           <TextField
             label="Nama Alias"
             fullWidth
+            size="small"
             required
             value={aliasForm.namaAlias}
             onChange={(e) => setAliasForm({ ...aliasForm, namaAlias: e.target.value })}
             error={aliasErrors.namaAlias}
             helperText={aliasErrors.namaAlias ? 'Nama alias tidak boleh kosong' : ''}
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
           />
-          <FormControl fullWidth>
+          <FormControl fullWidth size="small">
             <InputLabel>Status</InputLabel>
             <Select
               value={aliasForm.status}
               label="Status"
               onChange={(e) => setAliasForm({ ...aliasForm, status: e.target.value })}
+              sx={{ borderRadius: '8px' }}
             >
               <MenuItem value="Aktif">Aktif</MenuItem>
               <MenuItem value="Non Aktif">Non Aktif</MenuItem>
@@ -638,16 +784,16 @@ const MasterSwiftCode = () => {
             <Button
               variant="outlined"
               onClick={() => setOpenEditAlias(false)}
-              sx={{ borderRadius: 2, color: '#64748b', borderColor: '#cbd5e1', textTransform: 'none', fontWeight: 700 }}
+              sx={{ borderRadius: '8px', color: 'text.secondary', borderColor: 'divider', textTransform: 'none', fontWeight: 700 }}
             >
-              Cancel
+              Batal
             </Button>
             <Button
               variant="contained"
               onClick={handleUpdateAliasSubmit}
-              sx={{ bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' }, borderRadius: 2, textTransform: 'none', fontWeight: 700 }}
+              sx={{ bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' }, borderRadius: '8px', textTransform: 'none', fontWeight: 700, boxShadow: 'none' }}
             >
-              UPDATE
+              UPDATE ALIAS
             </Button>
           </Stack>
         </Stack>

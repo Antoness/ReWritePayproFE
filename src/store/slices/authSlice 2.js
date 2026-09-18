@@ -22,7 +22,8 @@ const getInitialUser = () => {
       return {
         username: decoded.sub,
         position: decoded.position,
-        privilage: decoded.privilage,
+        privilage: decoded.privilege || decoded.privilage,
+        privilege: decoded.privilege || decoded.privilage,
         nik: decoded.nik,
         fullName: decoded.fullName,
         division: decoded.division,
@@ -49,7 +50,8 @@ const authSlice = createSlice({
         state.user = {
           username: decoded.sub,
           position: decoded.position,
-          privilage: decoded.privilage,
+          privilage: decoded.privilege || decoded.privilage,
+        privilege: decoded.privilege || decoded.privilage,
           nik: decoded.nik,
           fullName: decoded.fullName,
           division: decoded.division,
