@@ -12,7 +12,12 @@ import {
   CloudUpload as CloudUploadIcon,
   Download as DownloadIcon,
   PlayArrow as PlayArrowIcon,
-  InfoOutlined as InfoIcon
+  InfoOutlined as InfoIcon,
+  AccountBalance as AccountBalanceIcon,
+  Search as SearchIcon,
+  LocationCity as LocationCityIcon,
+  CheckCircle as CheckCircleIcon,
+  CalendarMonth as CalendarMonthIcon
 } from '@mui/icons-material';
 import DataTable from '../../components/Common/DataTable';
 import SearchableSelect from '../../components/Common/SearchableSelect';
@@ -399,91 +404,326 @@ const MasterUmk = () => {
   ];
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, color: '#1e293b' }}>Master UMK</Typography>
-        <Typography variant="body2" color="text.secondary">Kelola data Upah Minimum Kabupaten/Kota sesuai wilayah dan tahun</Typography>
+    <Box sx={{ width: '100%', pb: 4 }}>
+      {/* PAGE HEADER */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box
+            sx={{
+              p: 1.5,
+              borderRadius: 3,
+              bgcolor: 'primary.main',
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 8px 20px rgba(59, 130, 246, 0.3)'
+            }}
+          >
+            <AccountBalanceIcon sx={{ fontSize: 28 }} />
+          </Box>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', letterSpacing: '-0.5px' }}>
+              Master UMK
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
+              Kelola data Upah Minimum Kabupaten/Kota (UMK) sesuai wilayah branch dan periode tahun
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+          <Button
+            variant="outlined"
+            startIcon={<HistoryIcon />}
+            onClick={() => {
+              setOpenHistory(true);
+              fetchHistory();
+            }}
+            sx={{
+              borderRadius: 2.5,
+              fontWeight: 700,
+              textTransform: 'none',
+              px: 2.5,
+              py: 1,
+              borderColor: 'divider',
+              color: 'text.primary',
+              '&:hover': { bgcolor: 'action.hover' }
+            }}
+          >
+            LOG HISTORY
+          </Button>
+
+          {isSpv && (
+            <>
+              <Button
+                variant="outlined"
+                startIcon={<CloudUploadIcon />}
+                onClick={() => setOpenUpload(true)}
+                sx={{
+                  borderRadius: 2.5,
+                  fontWeight: 700,
+                  textTransform: 'none',
+                  px: 2.5,
+                  py: 1,
+                  borderColor: 'primary.main',
+                  color: 'primary.main',
+                  '&:hover': { bgcolor: 'rgba(59, 130, 246, 0.08)' }
+                }}
+              >
+                UPLOAD DATA
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => setOpenAdd(true)}
+                sx={{
+                  borderRadius: 2.5,
+                  fontWeight: 700,
+                  textTransform: 'none',
+                  px: 2.5,
+                  py: 1,
+                  bgcolor: 'primary.main',
+                  boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)',
+                  '&:hover': { bgcolor: 'primary.dark' }
+                }}
+              >
+                ADD UMK
+              </Button>
+            </>
+          )}
+        </Box>
       </Box>
 
-      <Paper sx={{ p: 3, mb: 3, borderRadius: 4, bgcolor: '#f1f5f9' }} elevation={0}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={4}><TextField fullWidth size="small" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); fetchUmkData(); } }} sx={{ bgcolor: 'white', borderRadius: '8px' }} /></Grid>
-          <Grid item xs={12} md={2}>
-            <Button 
-              fullWidth 
-              variant="contained" 
-              onClick={() => {
-                setPage(1);
-                fetchUmkData();
-              }} 
-              sx={{ bgcolor: '#1e293b', borderRadius: '8px', height: '40px', fontWeight: 600 }}
-            >
-              SEARCH
-            </Button>
-          </Grid>
-          <Grid item xs={12}>
-            <Stack direction="row" spacing={2} alignItems="center">
-              <SearchableSelect 
-                placeholder="(Branch)"
-                value={branch}
-                onChange={setBranch}
-                options={dropdowns.branches}
-                minWidth={200}
-              />
-              <SearchableSelect 
-                placeholder="(Status)"
-                value={status}
-                onChange={setStatus}
-                options={dropdowns.statuses}
-                minWidth={150}
-              />
-              <SearchableSelect 
-                placeholder="(Year)"
-                value={year}
-                onChange={setYear}
-                options={dropdowns.years}
-                minWidth={120}
-              />
-            </Stack>
-          </Grid>
-          <Grid item xs={12}>
-            <Stack direction="row" spacing={2}>
-              {isSpv && (
-                <Button 
-                  variant="outlined" 
-                  onClick={() => setOpenAdd(true)}
-                  sx={{ borderRadius: '8px', fontWeight: 800, color: '#3b82f6', borderColor: '#3b82f6', borderSize: '2px' }}
-                >
-                  +ADD
-                </Button>
-              )}
-              
-              <Button 
-                variant="outlined" 
-                startIcon={<HistoryIcon />} 
-                onClick={() => {
-                  setOpenHistory(true);
-                  fetchHistory();
-                }}
-                sx={{ borderRadius: '8px', fontWeight: 600, color: '#1e293b', borderColor: '#cbd5e1' }}
-              >
-                LOG HISTORY
-              </Button>
+      {/* TOP KPI SUMMARY CARDS */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 2, mb: 3 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            transition: 'all 0.2s',
+            '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }
+          }}
+        >
+          <Box sx={{ p: 1.25, borderRadius: 2.5, bgcolor: 'rgba(59, 130, 246, 0.1)', color: '#2563eb' }}>
+            <LocationCityIcon sx={{ fontSize: 26 }} />
+          </Box>
+          <Box>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase' }}>
+              Total Data
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary', lineHeight: 1.2 }}>
+              {totalElements || umkData.length} <Box component="span" sx={{ fontSize: '0.75rem', fontWeight: 500, color: 'text.secondary' }}>records</Box>
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+              Data UMK wilayah
+            </Typography>
+          </Box>
+        </Paper>
 
-              {isSpv && (
-                <Button 
-                  variant="outlined" 
-                  onClick={() => setOpenUpload(true)}
-                  sx={{ borderRadius: '8px', fontWeight: 800, color: '#3b82f6', borderColor: '#3b82f6', borderSize: '2px' }}
-                >
-                  UPLOAD DATA
-                </Button>
-              )}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            transition: 'all 0.2s',
+            '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }
+          }}
+        >
+          <Box sx={{ p: 1.25, borderRadius: 2.5, bgcolor: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+            <AccountBalanceIcon sx={{ fontSize: 26 }} />
+          </Box>
+          <Box>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase' }}>
+              Branch Terdaftar
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary', lineHeight: 1.2 }}>
+              {dropdowns.branches?.length || 0} <Box component="span" sx={{ fontSize: '0.75rem', fontWeight: 500, color: 'text.secondary' }}>cabang</Box>
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+              Cakupan wilayah
+            </Typography>
+          </Box>
+        </Paper>
+
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            transition: 'all 0.2s',
+            '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }
+          }}
+        >
+          <Box sx={{ p: 1.25, borderRadius: 2.5, bgcolor: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' }}>
+            <CheckCircleIcon sx={{ fontSize: 26 }} />
+          </Box>
+          <Box>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase' }}>
+              Status Approval
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary', lineHeight: 1.2 }}>
+              {status || 'ALL'}
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+              Status data terpilih
+            </Typography>
+          </Box>
+        </Paper>
+
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            transition: 'all 0.2s',
+            '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }
+          }}
+        >
+          <Box sx={{ p: 1.25, borderRadius: 2.5, bgcolor: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+            <CalendarMonthIcon sx={{ fontSize: 26 }} />
+          </Box>
+          <Box>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase' }}>
+              Tahun UMK
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary', lineHeight: 1.2 }}>
+              {year || new Date().getFullYear()}
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+              Periode berlaku
+            </Typography>
+          </Box>
+        </Paper>
+      </Box>
+
+      {/* FILTER PANEL */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2.5,
+          mb: 3,
+          borderRadius: 3.5,
+          border: '1px solid',
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.02)'
+        }}
+      >
+        <Stack spacing={2}>
+          {/* Row 1: Search, SEARCH button, CLEAR button */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr auto' }, gap: 2, alignItems: 'center' }}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Cari Branch atau Wilayah..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); fetchUmkData(); } }}
+              InputProps={{
+                startAdornment: (
+                  <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />
+                )
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2.5,
+                  bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : '#f8fafc'
+                }
+              }}
+            />
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Button
+                variant="contained"
+                onClick={() => { setPage(1); fetchUmkData(); }}
+                sx={{
+                  bgcolor: '#1e293b',
+                  color: 'white',
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  borderRadius: 2.5,
+                  px: 3,
+                  height: 40,
+                  '&:hover': { bgcolor: '#0f172a' }
+                }}
+              >
+                SEARCH
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  setSearch('');
+                  setBranch('');
+                  setStatus('');
+                  setYear(new Date().getFullYear().toString());
+                  setPage(1);
+                }}
+                sx={{
+                  borderRadius: 2.5,
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  height: 40,
+                  px: 2.5,
+                  borderColor: 'divider',
+                  color: 'text.secondary',
+                  '&:hover': { bgcolor: 'action.hover' }
+                }}
+              >
+                CLEAR
+              </Button>
             </Stack>
-          </Grid>
-        </Grid>
+          </Box>
+
+          {/* Row 2: Cascading SearchableSelect Filters */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 1.5 }}>
+            <SearchableSelect 
+              placeholder="(Branch)"
+              value={branch}
+              onChange={setBranch}
+              options={dropdowns.branches}
+            />
+            <SearchableSelect 
+              placeholder="(Status)"
+              value={status}
+              onChange={setStatus}
+              options={dropdowns.statuses}
+            />
+            <SearchableSelect 
+              placeholder="(Year)"
+              value={year}
+              onChange={setYear}
+              options={dropdowns.years}
+            />
+          </Box>
+        </Stack>
       </Paper>
 
+      {/* DATA TABLE */}
       <DataTable
         columns={columns}
         data={umkData}

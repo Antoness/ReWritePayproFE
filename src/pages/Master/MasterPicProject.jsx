@@ -7,7 +7,13 @@ import {
 import { 
   Edit as EditIcon, 
   Close as CloseIcon,
-  Cancel as CancelIcon
+  Cancel as CancelIcon,
+  AssignmentInd as AssignmentIndIcon,
+  Search as SearchIcon,
+  People as PeopleIcon,
+  AccountTree as AccountTreeIcon,
+  CheckCircle as CheckCircleIcon,
+  Business as BusinessIcon
 } from '@mui/icons-material';
 import SearchableSelect from '../../components/Common/SearchableSelect';
 import DataTable from '../../components/Common/DataTable';
@@ -15,11 +21,6 @@ import { useCascadingDropdowns } from '../../hooks/useCascadingDropdowns';
 import CustomModal from '../../components/Common/CustomModal';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-
-const mockDivisions = ['Bumi Bersinar', 'Kreatif Anak Bangsa', 'Allo Bank', 'BCA Digital', 'BCA Life'];
-const mockUnits = ['Bumi Bersinar', 'Kreatif Anak Bangsa', 'Allo Bank', 'BCA Digital', 'BCA Life'];
-const mockPositions = ['Admin Telemarketing', 'Admin Reception', 'Sales', 'IT Tester Manual', 'Accounting'];
-const mockBranches = ['JAKARTA', 'Tangerang Selatan', 'MALANG'];
 
 const MasterPicProject = () => {
   const [data, setData] = useState([]);
@@ -183,7 +184,7 @@ const MasterPicProject = () => {
   const columns = [
     { 
       id: 'checkbox', 
-      label: <Checkbox size="small" checked={selectedIds.length === data.length && data.length > 0} onChange={handleSelectAll} sx={{ color: '#1e293b' }} />, 
+      label: <Checkbox size="small" checked={selectedIds.length === data.length && data.length > 0} onChange={handleSelectAll} />, 
       render: (row) => (
         <Checkbox 
           size="small" 
@@ -197,7 +198,15 @@ const MasterPicProject = () => {
     { id: 'position', label: 'Position', render: (row) => <Typography sx={{ fontSize: '0.85rem' }}>{row.position}</Typography> },
     { id: 'branch', label: 'Branch', render: (row) => <Typography sx={{ fontSize: '0.85rem' }}>{row.branch}</Typography> },
     { id: 'employeeType', label: 'Employee Type', render: (row) => <Typography sx={{ fontSize: '0.85rem' }}>{row.employeeType}</Typography> },
-    { id: 'pic', label: 'Pic', render: (row) => <Typography sx={{ fontSize: '0.85rem' }}>{row.pic}</Typography> },
+    { 
+      id: 'pic', 
+      label: 'PIC Project', 
+      render: (row) => row.pic ? (
+        <Chip label={row.pic} size="small" sx={{ bgcolor: 'rgba(59, 130, 246, 0.1)', color: '#2563eb', fontWeight: 700, fontSize: '0.75rem' }} />
+      ) : (
+        <Typography variant="caption" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>Belum di-assign</Typography>
+      )
+    },
     { 
       id: 'actions', 
       label: '', 
@@ -210,56 +219,298 @@ const MasterPicProject = () => {
   ];
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, color: '#1e293b' }}>Master PIC Project</Typography>
-        <Typography variant="body2" color="text.secondary">Kelola Master PIC Project</Typography>
+    <Box sx={{ width: '100%', pb: 4 }}>
+      {/* PAGE HEADER */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box
+            sx={{
+              p: 1.5,
+              borderRadius: 3,
+              bgcolor: 'primary.main',
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 8px 20px rgba(59, 130, 246, 0.3)'
+            }}
+          >
+            <AssignmentIndIcon sx={{ fontSize: 28 }} />
+          </Box>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', letterSpacing: '-0.5px' }}>
+              Master PIC Project
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
+              Penugasan dan pemetaan PIC (Person in Charge) untuk setiap divisi, unit kerja, dan proyek
+            </Typography>
+          </Box>
+        </Box>
       </Box>
 
-      {/* Filter Panel */}
-      <Paper sx={{ p: 3, mb: 3, borderRadius: 4, bgcolor: '#f1f5f9' }} elevation={0}>
-        <Stack spacing={2}>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                size="small"
-                placeholder="Cari..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                sx={{ bgcolor: 'white', borderRadius: '8px' }}
-              />
-            </Grid>
-            <Grid item xs={12} md={8}>
-              <Stack direction="row" spacing={1.5} flexWrap="wrap">
-                <Button variant="contained" onClick={() => { setPage(1); fetchData(); }} sx={{ bgcolor: '#1e293b', textTransform: 'none', fontWeight: 600, borderRadius: '8px', '&:hover': { bgcolor: '#0f172a' } }}>
-                  SEARCH
-                </Button>
-              </Stack>
-            </Grid>
-          </Grid>
+      {/* TOP KPI SUMMARY CARDS */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 2, mb: 3 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            transition: 'all 0.2s',
+            '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }
+          }}
+        >
+          <Box sx={{ p: 1.25, borderRadius: 2.5, bgcolor: 'rgba(59, 130, 246, 0.1)', color: '#2563eb' }}>
+            <AccountTreeIcon sx={{ fontSize: 26 }} />
+          </Box>
+          <Box>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase' }}>
+              Total Data
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary', lineHeight: 1.2 }}>
+              {totalElements} <Box component="span" sx={{ fontSize: '0.75rem', fontWeight: 500, color: 'text.secondary' }}>records</Box>
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+              Pemetaan project
+            </Typography>
+          </Box>
+        </Paper>
 
-          <Stack direction="row" spacing={1.5} flexWrap="wrap">
-            <SearchableSelect freeSolo={true} placeholder="(Division)" options={divisions} value={filterDivision} onChange={setFilterDivision} minWidth={160} />
-            <SearchableSelect freeSolo={true} placeholder="(Unit)" options={units} value={filterUnit} onChange={setFilterUnit} minWidth={160} />
-            <SearchableSelect freeSolo={true} placeholder="(Position)" options={positions} value={filterPosition} onChange={setFilterPosition} minWidth={160} />
-            <SearchableSelect freeSolo={true} placeholder="(Branch)" options={branches} value={filterBranch} onChange={setFilterBranch} minWidth={160} />
-          </Stack>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            transition: 'all 0.2s',
+            '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }
+          }}
+        >
+          <Box sx={{ p: 1.25, borderRadius: 2.5, bgcolor: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+            <BusinessIcon sx={{ fontSize: 26 }} />
+          </Box>
+          <Box>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase' }}>
+              Division Aktif
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary', lineHeight: 1.2 }}>
+              {divisions.length} <Box component="span" sx={{ fontSize: '0.75rem', fontWeight: 500, color: 'text.secondary' }}>divisi</Box>
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+              Terdaftar dalam sistem
+            </Typography>
+          </Box>
+        </Paper>
+
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            transition: 'all 0.2s',
+            '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }
+          }}
+        >
+          <Box sx={{ p: 1.25, borderRadius: 2.5, bgcolor: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' }}>
+            <PeopleIcon sx={{ fontSize: 26 }} />
+          </Box>
+          <Box>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase' }}>
+              Total PIC User
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary', lineHeight: 1.2 }}>
+              {users.length} <Box component="span" sx={{ fontSize: '0.75rem', fontWeight: 500, color: 'text.secondary' }}>user</Box>
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+              Siap ditugaskan
+            </Typography>
+          </Box>
+        </Paper>
+
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            transition: 'all 0.2s',
+            '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }
+          }}
+        >
+          <Box sx={{ p: 1.25, borderRadius: 2.5, bgcolor: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+            <CheckCircleIcon sx={{ fontSize: 26 }} />
+          </Box>
+          <Box>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase' }}>
+              Branch Coverage
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary', lineHeight: 1.2 }}>
+              {branches.length} <Box component="span" sx={{ fontSize: '0.75rem', fontWeight: 500, color: 'text.secondary' }}>cabang</Box>
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+              Wilayah penempatan
+            </Typography>
+          </Box>
+        </Paper>
+      </Box>
+
+      {/* FILTER PANEL */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2.5,
+          mb: 3,
+          borderRadius: 3.5,
+          border: '1px solid',
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.02)'
+        }}
+      >
+        <Stack spacing={2}>
+          {/* Row 1: Search, SEARCH button, CLEAR button */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr auto' }, gap: 2, alignItems: 'center' }}>
+            <TextField 
+              size="small" 
+              fullWidth
+              placeholder="Cari Division, Unit, Posisi, Branch..." 
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); fetchData(); } }}
+              InputProps={{
+                startAdornment: (
+                  <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />
+                )
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2.5,
+                  bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : '#f8fafc'
+                }
+              }}
+            />
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Button
+                variant="contained"
+                onClick={() => { setPage(1); fetchData(); }}
+                sx={{
+                  bgcolor: '#1e293b',
+                  color: 'white',
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  borderRadius: 2.5,
+                  px: 3,
+                  height: 40,
+                  '&:hover': { bgcolor: '#0f172a' }
+                }}
+              >
+                SEARCH
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  setSearch('');
+                  setFilterDivision('');
+                  setFilterUnit('');
+                  setFilterPosition('');
+                  setFilterBranch('');
+                  setPage(1);
+                }}
+                sx={{
+                  borderRadius: 2.5,
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  height: 40,
+                  px: 2.5,
+                  borderColor: 'divider',
+                  color: 'text.secondary',
+                  '&:hover': { bgcolor: 'action.hover' }
+                }}
+              >
+                CLEAR
+              </Button>
+            </Stack>
+          </Box>
+
+          {/* Row 2: Cascading SearchableSelect Filters */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 1.5 }}>
+            <SearchableSelect freeSolo={true} placeholder="(Division)" options={divisions} value={filterDivision} onChange={setFilterDivision} />
+            <SearchableSelect freeSolo={true} placeholder="(Unit)" options={units} value={filterUnit} onChange={setFilterUnit} />
+            <SearchableSelect freeSolo={true} placeholder="(Position)" options={positions} value={filterPosition} onChange={setFilterPosition} />
+            <SearchableSelect freeSolo={true} placeholder="(Branch)" options={branches} value={filterBranch} onChange={setFilterBranch} />
+          </Box>
         </Stack>
       </Paper>
 
-      {/* Assign Panel */}
-      <Paper sx={{ p: 3, mb: 3, borderRadius: 4, bgcolor: '#f1f5f9' }} elevation={0}>
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <SearchableSelect 
-            placeholder="(Pilih User)" 
-            options={users} 
-            value={assignUser} 
-            onChange={setAssignUser} 
-            minWidth={220}
-          />
+      {/* ACTION TOOLBAR DIRECTLY ABOVE DATATABLE */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 1.5,
+          px: 2,
+          mb: 2,
+          borderRadius: 3,
+          border: '1px solid',
+          borderColor: 'divider',
+          bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.4)' : '#f8fafc',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 1.5
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+            Penugasan PIC:
+          </Typography>
+          {selectedIds.length > 0 ? (
+            <Chip
+              label={`${selectedIds.length} data dipilih`}
+              size="small"
+              color="primary"
+              sx={{ fontWeight: 700, fontSize: '0.75rem', borderRadius: 2 }}
+            />
+          ) : (
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+              (Pilih checklist baris untuk assign PIC)
+            </Typography>
+          )}
+        </Box>
+
+        <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+          <Box sx={{ width: 220 }}>
+            <SearchableSelect 
+              placeholder="(Pilih PIC User)" 
+              options={users} 
+              value={assignUser} 
+              onChange={setAssignUser} 
+            />
+          </Box>
           <Button 
             variant="contained" 
+            disabled={selectedIds.length === 0 || !assignUser}
             onClick={async () => {
               if (selectedIds.length === 0) {
                 setSnackbar({ open: true, message: 'Pilih data terlebih dahulu', severity: 'warning' });
@@ -280,7 +531,7 @@ const MasterPicProject = () => {
                     'fullname': user?.username || 'Staff HRD'
                   }
                 });
-                setSnackbar({ open: true, message: 'Berhasil Assign User', severity: 'success' });
+                setSnackbar({ open: true, message: `Berhasil Assign PIC ke ${selectedIds.length} data`, severity: 'success' });
                 setSelectedIds([]);
                 setAssignUser('');
                 fetchData();
@@ -289,13 +540,23 @@ const MasterPicProject = () => {
                 setSnackbar({ open: true, message: 'Gagal Assign User', severity: 'error' });
               }
             }}
-            sx={{ bgcolor: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', boxShadow: 'none', fontWeight: 600, textTransform: 'none', '&:hover': { bgcolor: '#dbeafe', boxShadow: 'none' } }}
+            sx={{ 
+              bgcolor: 'primary.main', 
+              color: 'white', 
+              fontWeight: 700, 
+              borderRadius: 2.5,
+              textTransform: 'none', 
+              px: 2.5,
+              height: 40,
+              '&:hover': { bgcolor: 'primary.dark' } 
+            }}
           >
-            Assign
+            ASSIGN PIC ({selectedIds.length})
           </Button>
         </Stack>
       </Paper>
 
+      {/* DATA TABLE */}
       <DataTable 
         columns={columns} 
         data={data} 

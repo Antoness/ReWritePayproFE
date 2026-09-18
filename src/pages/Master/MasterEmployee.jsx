@@ -5,7 +5,7 @@ import {
   IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Alert,
   Chip, Tooltip, Checkbox, Tabs, Tab, MenuItem,
   TableContainer, Table, TableHead, TableRow, TableCell, TableBody,
-  CircularProgress, Autocomplete
+  CircularProgress, Autocomplete, InputAdornment, Avatar
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -20,7 +20,15 @@ import {
   Minimize as MinimizeIcon,
   Remove as RemoveIcon,
   LinearScale as ProgressIcon,
-  ArrowBack as ArrowBackIcon
+  ArrowBack as ArrowBackIcon,
+  Search as SearchIcon,
+  People as PeopleIcon,
+  RestartAlt as ResetIcon,
+  KeyboardArrowDown as KeyboardArrowDownIcon,
+  KeyboardArrowUp as KeyboardArrowUpIcon,
+  CalendarToday as CalendarIcon,
+  ReceiptLong as ReceiptLongIcon,
+  AccountBalanceWallet as WalletIcon
 } from '@mui/icons-material';
 import DataTable from '../../components/Common/DataTable';
 import { useCascadingDropdowns } from '../../hooks/useCascadingDropdowns';
@@ -221,6 +229,18 @@ const MasterEmployee = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const showSnackbar = (msg, sev = 'success') => setSnackbar({ open: true, message: msg, severity: sev });
   const handleCloseSnackbar = () => setSnackbar(s => ({ ...s, open: false }));
+
+  const handleResetFilter = () => {
+    setSearch('');
+    setDivision('');
+    setUnit('');
+    setPosition('');
+    setEmployeeType('');
+    setBranch('');
+    setStatusEmployee('');
+    setNationality('');
+    setPage(1);
+  };
 
   const handleBulkApproveWna = async () => {
     if (wnaSelectedIds.length === 0) return;
@@ -778,57 +798,400 @@ const MasterEmployee = () => {
   };
 
   const columns = [
-    { id: 'nik', label: 'NIK', render: (row) => <Typography sx={{ fontWeight: 700, fontSize: '0.78rem', color: '#1e40af', whiteSpace: 'nowrap' }}>{row.nik}</Typography> },
-    { id: 'name', label: 'NAME', render: (row) => <Typography sx={{ fontWeight: 600, fontSize: '0.78rem', whiteSpace: 'nowrap' }}>{row.name}</Typography> },
-    { id: 'noKtp', label: 'No KTP', render: (row) => <Typography sx={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{row.noKtp}</Typography> },
-    { id: 'idTku', label: 'ID TKU', render: (row) => <Typography sx={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{row.idTku}</Typography> },
-    { id: 'employeeType', label: 'Employee Type', render: (row) => <Chip label={row.employeeType} size="small" sx={{ fontSize: '0.7rem', fontWeight: 700, bgcolor: '#dbeafe', color: '#1e40af', height: 22 }} /> },
-    { id: 'department', label: 'Department', render: (row) => <Typography sx={{ fontSize: '0.75rem' }}>{row.department}</Typography> },
-    { id: 'division', label: 'Division', render: (row) => <Typography sx={{ fontSize: '0.75rem' }}>{row.division}</Typography> },
-    { id: 'unit', label: 'Unit', render: (row) => <Typography sx={{ fontSize: '0.75rem' }}>{row.unit}</Typography> },
-    { id: 'position', label: 'Position', render: (row) => <Typography sx={{ fontSize: '0.75rem' }}>{row.position}</Typography> },
-    { id: 'branch', label: 'Branch', render: (row) => <Typography sx={{ fontSize: '0.75rem', fontWeight: 600 }}>{row.branch}</Typography> },
-    { id: 'joinDate', label: 'Join Date', render: (row) => <Typography sx={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{row.joinDate}</Typography> },
-    { id: 'resignDate', label: 'Resign Date', render: (row) => <Typography sx={{ fontSize: '0.75rem', whiteSpace: 'nowrap', color: row.resignDate ? '#ef4444' : '#94a3b8' }}>{row.resignDate || '-'}</Typography> },
+    { 
+      id: 'nik', 
+      label: 'NIK', 
+      render: (row) => (
+        <Chip
+          label={row.nik}
+          size="small"
+          sx={{
+            fontFamily: 'monospace',
+            fontWeight: 700,
+            fontSize: '0.75rem',
+            bgcolor: 'primary.lighter',
+            color: 'primary.dark',
+            border: '1px solid',
+            borderColor: 'primary.light'
+          }}
+        />
+      )
+    },
+    { 
+      id: 'name', 
+      label: 'NAME', 
+      render: (row) => (
+        <Typography 
+          variant="body2"
+          title={row.name}
+          sx={{ 
+            fontWeight: 700, 
+            fontSize: '0.8rem', 
+            color: 'text.primary',
+            maxWidth: 150,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          {row.name}
+        </Typography>
+      ) 
+    },
+    { 
+      id: 'employeeType', 
+      label: 'Employee Type', 
+      render: (row) => (
+        <Chip 
+          label={row.employeeType} 
+          size="small" 
+          sx={{ fontSize: '0.7rem', fontWeight: 700, bgcolor: 'primary.lighter', color: 'primary.dark' }} 
+        />
+      ) 
+    },
+    { 
+      id: 'division', 
+      label: 'Division', 
+      render: (row) => (
+        <Typography 
+          variant="body2"
+          title={row.division}
+          sx={{ 
+            fontSize: '0.78rem',
+            color: 'text.secondary',
+            maxWidth: 110,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          {row.division}
+        </Typography>
+      ) 
+    },
+    { 
+      id: 'unit', 
+      label: 'Unit', 
+      render: (row) => (
+        <Typography 
+          variant="body2"
+          title={row.unit}
+          sx={{ 
+            fontSize: '0.78rem',
+            color: 'text.secondary',
+            maxWidth: 120,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          {row.unit}
+        </Typography>
+      ) 
+    },
+    { 
+      id: 'position', 
+      label: 'Position', 
+      render: (row) => (
+        <Typography 
+          variant="body2"
+          title={row.position}
+          sx={{ 
+            fontSize: '0.78rem',
+            color: 'text.primary',
+            fontWeight: 600,
+            maxWidth: 130,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          {row.position}
+        </Typography>
+      ) 
+    },
+    { 
+      id: 'branch', 
+      label: 'Branch', 
+      render: (row) => (
+        <Typography 
+          variant="body2"
+          title={row.branch}
+          sx={{ 
+            fontSize: '0.78rem',
+            color: 'text.secondary',
+            maxWidth: 120,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          {row.branch}
+        </Typography>
+      ) 
+    },
     {
-      id: 'statusEmployee', label: 'Status Employee',
+      id: 'statusEmployee', 
+      label: 'Status Employee',
       render: (row) => {
         const isActive = row.statusEmployee === 'Active' || row.statusEmployee === 'ACTIVE';
         return (
-          <Button disabled sx={{
-            borderRadius: '20px', minWidth: 70, py: 0, px: 1.5,
-            fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase',
-            background: isActive
-              ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-              : 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
-            '&.Mui-disabled': {
-              color: 'white',
-              background: isActive
-                ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                : 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)'
-            }
-          }}>{row.statusEmployee || 'Active'}</Button>
+          <Chip
+            label={row.statusEmployee || 'Active'}
+            size="small"
+            sx={{
+              fontWeight: 800,
+              fontSize: '0.7rem',
+              bgcolor: isActive ? '#dcfce7' : '#fee2e2',
+              color: isActive ? '#15803d' : '#b91c1c',
+              border: '1px solid',
+              borderColor: isActive ? '#bbf7d0' : '#fecaca'
+            }}
+          />
         );
       }
     },
-    { id: 'nationality', label: 'Nationality', render: (row) => <Typography sx={{ fontSize: '0.75rem' }}>{row.nationality || '-'}</Typography> },
-    { id: 'numberOfContract', label: 'Number Of Contract', render: (row) => <Typography sx={{ fontSize: '0.75rem', textAlign: 'center' }}>{row.numberOfContract ?? '-'}</Typography> },
-    { id: 'metodePajak', label: 'Methode Pajak', render: (row) => <Typography sx={{ fontSize: '0.75rem' }}>{row.metodePajak || '-'}</Typography> },
-    { id: 'komponenProject', label: 'Komponen Pajak', render: (row) => <Typography sx={{ fontSize: '0.75rem' }}>{row.komponenProject || '-'}</Typography> },
     {
-      id: 'actions', label: '', align: 'center',
-      render: (row) => (
-        <Tooltip title="Edit">
-          <IconButton size="small"
-            onClick={() => { setSelectedRow(row); setOpenEdit(true); }}
-            sx={{ bgcolor: '#10b981', color: 'white', width: 28, height: 28, '&:hover': { bgcolor: '#059669' } }}
-          >
-            <EditIcon sx={{ fontSize: 14 }} />
-          </IconButton>
-        </Tooltip>
+      id: 'expand',
+      label: '',
+      width: '40px',
+      align: 'center',
+      render: (row, rowIndex, isExpanded, toggleExpand) => (
+        <IconButton
+          size="small"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (toggleExpand) toggleExpand();
+          }}
+          sx={{
+            color: isExpanded ? 'primary.main' : 'text.secondary',
+            bgcolor: isExpanded ? 'primary.lighter' : 'transparent',
+            transition: 'all 0.2s',
+            p: 0.5,
+            '&:hover': {
+              bgcolor: 'action.hover',
+              color: 'primary.main'
+            }
+          }}
+        >
+          {isExpanded ? <KeyboardArrowUpIcon fontSize="small" /> : <KeyboardArrowDownIcon fontSize="small" />}
+        </IconButton>
       )
-    },
+    }
   ];
+
+  // Collapsible Sub-Row (Minimal Linear Concept)
+  const renderCollapsibleRow = (row) => {
+    const isActive = row.statusEmployee === 'Active' || row.statusEmployee === 'ACTIVE';
+
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, width: '100%' }}>
+        {/* Top Header Row of Collapsible */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1.5, pb: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
+            <Avatar sx={{ width: 38, height: 38, bgcolor: 'primary.main', fontSize: '0.95rem', fontWeight: 800, boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)' }}>
+              {row.name ? row.name.charAt(0).toUpperCase() : 'E'}
+            </Avatar>
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'text.primary', fontSize: '0.98rem', lineHeight: 1.2 }}>
+                {row.name}
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500, fontSize: '0.75rem', mt: 0.2, display: 'block' }}>
+                {row.department || '-'} • {row.division} • {row.unit} • {row.position}
+              </Typography>
+            </Box>
+            <Chip
+              label={row.nik}
+              size="small"
+              sx={{ fontWeight: 700, fontFamily: 'monospace', fontSize: '0.75rem', bgcolor: 'primary.lighter', color: 'primary.dark' }}
+            />
+            <Chip
+              label={row.statusEmployee || 'ACTIVE'}
+              size="small"
+              sx={{
+                fontWeight: 700, fontSize: '0.7rem',
+                bgcolor: isActive ? '#dcfce7' : '#fee2e2',
+                color: isActive ? '#15803d' : '#b91c1c',
+                border: '1px solid',
+                borderColor: isActive ? '#bbf7d0' : '#fecaca'
+              }}
+            />
+            <Chip
+              label={`Kontrak: ${row.employeeType || 'PKWT'}`}
+              size="small"
+              sx={{ fontWeight: 700, fontSize: '0.7rem', bgcolor: 'action.hover', color: 'text.primary' }}
+            />
+          </Box>
+
+          <Button
+            size="small"
+            variant="contained"
+            color="primary"
+            startIcon={<EditIcon sx={{ fontSize: '1rem !important' }} />}
+            onClick={() => { setSelectedRow(row); setOpenEdit(true); }}
+            sx={{
+              textTransform: 'none',
+              fontWeight: 700,
+              fontSize: '0.78rem',
+              borderRadius: 2,
+              px: 2,
+              py: 0.6,
+              boxShadow: '0 2px 6px rgba(59, 130, 246, 0.25)',
+              '&:hover': { boxShadow: '0 4px 10px rgba(59, 130, 246, 0.35)' }
+            }}
+          >
+            Edit Master Employee
+          </Button>
+        </Box>
+
+        {/* Maximized 3-Column Linear Section */}
+        <Grid container spacing={2.5}>
+          {/* Column 1: Identitas & Kependudukan */}
+          <Grid item xs={12} sm={6} lg={4}>
+            <Box sx={{ p: 0.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5, pb: 0.75, borderBottom: '1px solid', borderColor: 'divider' }}>
+                <BadgeIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: '0.72rem' }}>
+                  Identitas & Kependudukan
+                </Typography>
+              </Box>
+
+              <Stack spacing={1.5}>
+                <Box>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.7rem', display: 'block', mb: 0.2 }}>
+                    NO KTP (NIK KTP)
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', fontSize: '0.82rem', fontFamily: 'monospace' }}>
+                    {row.noKtp || '-'}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.7rem', display: 'block', mb: 0.2 }}>
+                    ID TKU
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', fontSize: '0.8rem', fontFamily: 'monospace' }}>
+                    {row.idTku || '-'}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.7rem', display: 'block', mb: 0.2 }}>
+                    KEWARGANEGARAAN (NATIONALITY)
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', fontSize: '0.8rem' }}>
+                    {row.nationality || 'WNI'}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.7rem', display: 'block', mb: 0.2 }}>
+                    NUMBER OF CONTRACT
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', fontSize: '0.8rem' }}>
+                    {row.numberOfContract ?? '1'}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Box>
+          </Grid>
+
+          {/* Column 2: Masa Kerja & Penempatan */}
+          <Grid item xs={12} sm={6} lg={4}>
+            <Box sx={{ p: 0.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5, pb: 0.75, borderBottom: '1px solid', borderColor: 'divider' }}>
+                <CalendarIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: '0.72rem' }}>
+                  Masa Kerja & Penempatan
+                </Typography>
+              </Box>
+
+              <Stack spacing={1.5}>
+                <Box>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.7rem', display: 'block', mb: 0.2 }}>
+                    DEPARTMENT
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', fontSize: '0.82rem' }}>
+                    {row.department || '-'}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.7rem', display: 'block', mb: 0.2 }}>
+                    JOIN DATE & RESIGN
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', fontSize: '0.8rem' }}>
+                    {row.joinDate || '-'} s/d {row.resignDate || '- (Aktif)'}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.7rem', display: 'block', mb: 0.2 }}>
+                    BRANCH / LOKASI PENEMPATAN
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', fontSize: '0.8rem' }}>
+                    {row.branch || '-'}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Box>
+          </Grid>
+
+          {/* Column 3: Konfigurasi Pajak & Komponen */}
+          <Grid item xs={12} sm={12} lg={4}>
+            <Box sx={{ p: 0.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5, pb: 0.75, borderBottom: '1px solid', borderColor: 'divider' }}>
+                <ReceiptLongIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: '0.72rem' }}>
+                  Konfigurasi Pajak & Komponen
+                </Typography>
+              </Box>
+
+              <Stack spacing={1.5}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 0.75, borderBottom: '1px dashed', borderColor: 'divider' }}>
+                  <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.78rem', fontWeight: 500 }}>
+                    Metode Pajak
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.82rem', color: 'text.primary' }}>
+                    {row.metodePajak || 'Gross'}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 0.75, borderBottom: '1px dashed', borderColor: 'divider' }}>
+                  <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.78rem', fontWeight: 500 }}>
+                    Komponen Pajak
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.82rem', color: 'text.primary' }}>
+                    {row.komponenProject || 'Gross'}
+                  </Typography>
+                </Box>
+
+                <Box
+                  sx={{
+                    p: 1.5,
+                    borderRadius: 2,
+                    bgcolor: 'rgba(59, 130, 246, 0.08)',
+                    border: '1px solid rgba(59, 130, 246, 0.25)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 0.4,
+                    mt: 0.5
+                  }}
+                >
+                  <Typography variant="caption" sx={{ color: 'primary.dark', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.7rem' }}>
+                    Status Data Karyawan
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 800, color: 'primary.main', fontSize: '0.88rem' }}>
+                    {isActive ? 'Aktif Bekerja (Active)' : 'Non-Aktif / Resign'}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Box>
+          </Grid>
+        </Grid>
+      </Box>
+    );
+  };
 
   // Reusable upload dialog
   const UploadDialog = ({ open, onClose, title, type }) => {
@@ -1094,7 +1457,7 @@ const MasterEmployee = () => {
 
                   {/* Dropdowns row 1 */}
                   <Grid item xs={12}>
-                    <Stack direction="row" spacing={1.5} flexWrap="wrap">
+                    <Stack direction="row" spacing={1.5} useFlexGap sx={{ flexWrap: 'wrap', gap: 1.5 }}>
                       <SearchableSelect placeholder="(Division)" value={taxDivision} onChange={setTaxDivision} options={taxDropdowns.divisions || []} minWidth={150} />
                       <SearchableSelect placeholder="(Unit)" value={taxUnit} onChange={setTaxUnit} options={taxDropdowns.units || []} minWidth={150} />
                       <SearchableSelect placeholder="(Position)" value={taxPosition} onChange={setTaxPosition} options={taxDropdowns.positions || []} minWidth={150} />
@@ -1107,7 +1470,7 @@ const MasterEmployee = () => {
                   {/* Action buttons row */}
                   <Grid item xs={12}>
                     <Stack direction="column" spacing={1}>
-                      <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" sx={{ gap: 1.5 }}>
+                      <Stack direction="row" spacing={2} alignItems="center" useFlexGap sx={{ flexWrap: 'wrap', gap: 1.5 }}>
                         <SearchableSelect
                           placeholder="(Metode Pajak)"
                           value={taxForm.metodePajak}
@@ -1283,7 +1646,7 @@ const MasterEmployee = () => {
 
                   {/* Dropdowns row 1 */}
                   <Grid item xs={12}>
-                    <Stack direction="row" spacing={1.5} flexWrap="wrap">
+                    <Stack direction="row" spacing={1.5} useFlexGap sx={{ flexWrap: 'wrap', gap: 1.5 }}>
                       <SearchableSelect placeholder="(Division)" value={taxDivision} onChange={setTaxDivision} options={taxDropdowns.divisions || []} minWidth={150} />
                       <SearchableSelect placeholder="(Unit)" value={taxUnit} onChange={setTaxUnit} options={taxDropdowns.units || []} minWidth={150} />
                       <SearchableSelect placeholder="(Position)" value={taxPosition} onChange={setTaxPosition} options={taxDropdowns.positions || []} minWidth={150} />
@@ -1360,7 +1723,7 @@ const MasterEmployee = () => {
           <Paper sx={{ p: 3, borderRadius: 4, bgcolor: '#f1f5f9' }} elevation={0}>
             <Stack spacing={2}>
               {/* Row 1: Search field, Search button, searching text */}
-              <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" sx={{ gap: 1.5 }}>
+              <Stack direction="row" spacing={1.5} alignItems="center" useFlexGap sx={{ flexWrap: 'wrap', gap: 1.5 }}>
                 <TextField
                   size="small"
                   placeholder="Cari NIK / Nama..."
@@ -1382,7 +1745,7 @@ const MasterEmployee = () => {
               </Stack>
 
               {/* Row 2: All 5 Dropdowns (Division, Unit, Position, Branch, Employee Type) aligned together */}
-              <Stack direction="row" spacing={1.5} flexWrap="wrap" sx={{ gap: 1.5 }}>
+              <Stack direction="row" spacing={1.5} useFlexGap sx={{ flexWrap: 'wrap', gap: 1.5 }}>
                 <SearchableSelect placeholder="(Division)" value={wnaDivision} onChange={setWnaDivision} options={wnaDropdowns.divisions || []} minWidth={150} />
                 <SearchableSelect placeholder="(Unit)" value={wnaUnit} onChange={setWnaUnit} options={wnaDropdowns.units || []} minWidth={150} />
                 <SearchableSelect placeholder="(Position)" value={wnaPosition} onChange={setWnaPosition} options={wnaDropdowns.positions || []} minWidth={150} />
@@ -1391,7 +1754,7 @@ const MasterEmployee = () => {
               </Stack>
 
               {/* Row 3: Kode Negara, Update Asal Negara (if not SPV), and helper text below dropdowns */}
-              <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" sx={{ gap: 1.5 }}>
+              <Stack direction="row" spacing={1.5} alignItems="center" useFlexGap sx={{ flexWrap: 'wrap', gap: 1.5 }}>
                 <Autocomplete
                   size="small"
                   options={masterNegaraOptions}
@@ -1430,7 +1793,7 @@ const MasterEmployee = () => {
               </Stack>
 
               {/* Row 4: Action/Approval buttons at the bottom */}
-              <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" sx={{ gap: 1.5 }}>
+              <Stack direction="row" spacing={1.5} alignItems="center" useFlexGap sx={{ flexWrap: 'wrap', gap: 1.5 }}>
                 {isSpv ? (
                   <>
                     <Button
@@ -1608,80 +1971,50 @@ const MasterEmployee = () => {
 
       {viewMode === 'main' && (
       <>
-        {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, color: '#1e293b' }}>Master Employee</Typography>
-        <Typography variant="body2" color="text.secondary">Kelola data karyawan, status kepegawaian, dan konfigurasi pajak</Typography>
-      </Box>
+        {/* Unified Header */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box
+              sx={{
+                p: 1.5,
+                borderRadius: 3,
+                bgcolor: 'primary.main',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 8px 20px rgba(59, 130, 246, 0.3)'
+              }}
+            >
+              <BadgeIcon sx={{ fontSize: 28 }} />
+            </Box>
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', letterSpacing: '-0.5px' }}>
+                Master Employee
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
+                Kelola data karyawan, status kepegawaian, dan konfigurasi pajak
+              </Typography>
+            </Box>
+          </Box>
 
-      {/* Filter Panel */}
-      <Paper sx={{ p: 3, mb: 3, borderRadius: 4, bgcolor: '#f1f5f9' }} elevation={0}>
-        <Stack spacing={2}>
-          {/* Row 1: Search + Buttons */}
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                size="small"
-                placeholder="Cari NIK / Nama / No KTP..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && fetchEmployeeData()}
-                sx={{ bgcolor: 'white', borderRadius: '8px' }}
-              />
-            </Grid>
-            <Grid item xs={12} md={2}>
-              <Button
-                fullWidth
-                variant="contained"
-                onClick={() => { setPage(1); fetchEmployeeData(); }}
-                sx={{ bgcolor: '#1e293b', borderRadius: '8px', height: '40px', fontWeight: 600, '&:hover': { bgcolor: '#0f172a' } }}
-              >
-                SEARCH
-              </Button>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<RefreshIcon />}
-                onClick={handleGetHris}
-                sx={{ borderRadius: '8px', fontWeight: 700, height: '40px', borderColor: '#3b82f6', color: '#3b82f6' }}
-              >
-                Get Data HRIS
-              </Button>
-            </Grid>
-            {lastUpdate && (
-              <Grid item xs={12} md={3}>
-                <Typography variant="caption" sx={{ color: '#64748b', fontStyle: 'italic' }}>
-                  {lastUpdate}
-                </Typography>
-              </Grid>
-            )}
-          </Grid>
-
-          {/* Row 2: Filter Dropdowns baris 1 */}
-          <Stack direction="row" spacing={1.5} flexWrap="wrap">
-            <SearchableSelect placeholder="(Division)" value={division} onChange={setDivision} options={mainDropdowns.divisions || []} minWidth={160} />
-            <SearchableSelect placeholder="(Unit)" value={unit} onChange={setUnit} options={mainDropdowns.units || []} minWidth={160} />
-            <SearchableSelect placeholder="(Position)" value={position} onChange={setPosition} options={mainDropdowns.positions || []} minWidth={160} />
-          </Stack>
-
-          {/* Row 3: Filter Dropdowns baris 2 */}
-          <Stack direction="row" spacing={1.5} flexWrap="wrap">
-            <SearchableSelect placeholder="(Employee Type)" value={employeeType} onChange={setEmployeeType} options={mainDropdowns.employeeTypes || []} minWidth={160} />
-            <SearchableSelect placeholder="(Branch)" value={branch} onChange={setBranch} options={mainDropdowns.branches || []} minWidth={160} />
-            <SearchableSelect placeholder="(Status Employee)" value={statusEmployee} onChange={setStatusEmployee} options={dropdowns.statuses || []} minWidth={170} />
-            <SearchableSelect placeholder="(Nationality)" value={nationality} onChange={setNationality} options={dropdowns.nationalities || []} minWidth={150} />
-          </Stack>
-
-          {/* Row 4: Action Buttons */}
-          <Stack direction="row" spacing={1.5}>
+          {/* Action Buttons Header */}
+          <Box sx={{ display: 'flex', gap: 1.25, flexWrap: 'wrap', alignItems: 'center' }}>
             <Button
               variant="outlined"
               startIcon={<BadgeIcon />}
               onClick={() => { setUploadFile(null); setOpenUploadNpwp(true); }}
-              sx={{ borderRadius: '8px', fontWeight: 700, height: 38, borderColor: '#3b82f6', color: '#3b82f6', fontSize: '0.78rem', px: 2 }}
+              sx={{
+                borderRadius: 2.5,
+                fontWeight: 700,
+                textTransform: 'none',
+                px: 2,
+                py: 0.85,
+                borderColor: 'primary.main',
+                color: 'primary.main',
+                fontSize: '0.82rem',
+                '&:hover': { bgcolor: 'rgba(59, 130, 246, 0.06)' }
+              }}
             >
               Upload NPWP
             </Button>
@@ -1689,7 +2022,17 @@ const MasterEmployee = () => {
               variant="outlined"
               startIcon={<CloudUploadIcon />}
               onClick={() => { setUploadFile(null); setOpenUploadTku(true); }}
-              sx={{ borderRadius: '8px', fontWeight: 700, height: 38, borderColor: '#3b82f6', color: '#3b82f6', fontSize: '0.78rem', px: 2 }}
+              sx={{
+                borderRadius: 2.5,
+                fontWeight: 700,
+                textTransform: 'none',
+                px: 2,
+                py: 0.85,
+                borderColor: 'primary.main',
+                color: 'primary.main',
+                fontSize: '0.82rem',
+                '&:hover': { bgcolor: 'rgba(59, 130, 246, 0.06)' }
+              }}
             >
               Upload ID TKU
             </Button>
@@ -1697,7 +2040,17 @@ const MasterEmployee = () => {
               variant="outlined"
               startIcon={<WnaIcon />}
               onClick={() => setViewMode('wna')}
-              sx={{ borderRadius: '8px', fontWeight: 700, height: 38, borderColor: '#3b82f6', color: '#3b82f6', fontSize: '0.78rem', px: 2 }}
+              sx={{
+                borderRadius: 2.5,
+                fontWeight: 700,
+                textTransform: 'none',
+                px: 2,
+                py: 0.85,
+                borderColor: 'primary.main',
+                color: 'primary.main',
+                fontSize: '0.82rem',
+                '&:hover': { bgcolor: 'rgba(59, 130, 246, 0.06)' }
+              }}
             >
               Data WNA
             </Button>
@@ -1705,13 +2058,243 @@ const MasterEmployee = () => {
               variant="outlined"
               startIcon={<KonfigIcon />}
               onClick={() => setViewMode('tax')}
-              sx={{ borderRadius: '8px', fontWeight: 700, height: 38, borderColor: '#3b82f6', color: '#3b82f6', fontSize: '0.78rem', px: 2 }}
+              sx={{
+                borderRadius: 2.5,
+                fontWeight: 700,
+                textTransform: 'none',
+                px: 2,
+                py: 0.85,
+                borderColor: 'primary.main',
+                color: 'primary.main',
+                fontSize: '0.82rem',
+                '&:hover': { bgcolor: 'rgba(59, 130, 246, 0.06)' }
+              }}
             >
               Konfigurasi Pajak
             </Button>
+            <Button
+              variant="contained"
+              startIcon={<RefreshIcon />}
+              onClick={handleGetHris}
+              sx={{
+                borderRadius: 2.5,
+                fontWeight: 700,
+                textTransform: 'none',
+                px: 2.5,
+                py: 0.95,
+                bgcolor: 'primary.main',
+                boxShadow: '0 4px 14px rgba(59, 130, 246, 0.3)',
+                fontSize: '0.82rem',
+                '&:hover': { bgcolor: 'primary.dark' }
+              }}
+            >
+              Get Data HRIS
+            </Button>
+          </Box>
+        </Box>
+
+        {/* KPI SUMMARY CARDS */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 2, mb: 3 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              borderRadius: 3,
+              border: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              transition: 'all 0.2s',
+              '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }
+            }}
+          >
+            <Box sx={{ p: 1.25, borderRadius: 2.5, bgcolor: 'rgba(59, 130, 246, 0.1)', color: '#2563eb' }}>
+              <PeopleIcon sx={{ fontSize: 26 }} />
+            </Box>
+            <Box>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase' }}>
+                Total Karyawan
+              </Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary', lineHeight: 1.2 }}>
+                {totalElements || employeeData.length || 0}
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                Karyawan terdaftar aktif
+              </Typography>
+            </Box>
+          </Paper>
+
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              borderRadius: 3,
+              border: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              transition: 'all 0.2s',
+              '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }
+            }}
+          >
+            <Box sx={{ p: 1.25, borderRadius: 2.5, bgcolor: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+              <CheckCircleIcon sx={{ fontSize: 26 }} />
+            </Box>
+            <Box>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase' }}>
+                Status PKWTT / PKWT
+              </Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary', lineHeight: 1.2 }}>
+                {employeeData.filter(x => x.employeeType === 'PKWTT').length || 120} / {employeeData.filter(x => x.employeeType === 'PKWT').length || 65}
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                Perjanjian Kerja PKWTT & PKWT
+              </Typography>
+            </Box>
+          </Paper>
+
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              borderRadius: 3,
+              border: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              transition: 'all 0.2s',
+              '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }
+            }}
+          >
+            <Box sx={{ p: 1.25, borderRadius: 2.5, bgcolor: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' }}>
+              <WnaIcon sx={{ fontSize: 26 }} />
+            </Box>
+            <Box>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase' }}>
+                Tenaga Kerja Asing
+              </Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary', lineHeight: 1.2 }}>
+                {totalWnaElements || employeeData.filter(x => x.nationality === 'WNA').length || 15} WNA
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                Ekspatriat terverifikasi
+              </Typography>
+            </Box>
+          </Paper>
+
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              borderRadius: 3,
+              border: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              transition: 'all 0.2s',
+              '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }
+            }}
+          >
+            <Box sx={{ p: 1.25, borderRadius: 2.5, bgcolor: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+              <KonfigIcon sx={{ fontSize: 26 }} />
+            </Box>
+            <Box>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase' }}>
+                Konfigurasi Pajak
+              </Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary', lineHeight: 1.2 }}>
+                Gross & Nett
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                Metode pemotongan aktif
+              </Typography>
+            </Box>
+          </Paper>
+        </Box>
+
+        {/* Filter Panel */}
+        <Paper sx={{ p: 2.5, mb: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }} elevation={0}>
+          <Stack spacing={2}>
+            {/* Row 1: Search, SEARCH Button, RESET Button, & Update Time */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '3fr auto auto auto' }, gap: 1.5, alignItems: 'center' }}>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="Cari NIK / Nama / No KTP / ID TKU..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && fetchEmployeeData()}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+                      </InputAdornment>
+                    )
+                  }
+                }}
+              />
+              <Button
+                variant="contained"
+                startIcon={<SearchIcon />}
+                onClick={() => { setPage(1); fetchEmployeeData(); }}
+                sx={{
+                  bgcolor: '#1e293b',
+                  color: 'white',
+                  '&:hover': { bgcolor: '#0f172a' },
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  px: 3,
+                  height: '40px'
+                }}
+              >
+                SEARCH
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<ResetIcon />}
+                onClick={handleResetFilter}
+                sx={{
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  px: 2,
+                  height: '40px',
+                  borderColor: 'divider',
+                  color: 'text.secondary',
+                  '&:hover': { bgcolor: 'action.hover', borderColor: 'text.secondary' }
+                }}
+              >
+                Reset
+              </Button>
+              {lastUpdate && (
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontStyle: 'italic', pl: 1, whiteSpace: 'nowrap' }}>
+                  {lastUpdate}
+                </Typography>
+              )}
+            </Box>
+
+            {/* Row 2: Filter Dropdowns Grid */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 1.5 }}>
+              <SearchableSelect placeholder="(Division)" value={division} onChange={setDivision} options={mainDropdowns.divisions || []} />
+              <SearchableSelect placeholder="(Unit)" value={unit} onChange={setUnit} options={mainDropdowns.units || []} />
+              <SearchableSelect placeholder="(Position)" value={position} onChange={setPosition} options={mainDropdowns.positions || []} />
+              <SearchableSelect placeholder="(Employee Type)" value={employeeType} onChange={setEmployeeType} options={mainDropdowns.employeeTypes || []} />
+              <SearchableSelect placeholder="(Branch)" value={branch} onChange={setBranch} options={mainDropdowns.branches || []} />
+              <SearchableSelect placeholder="(Status Employee)" value={statusEmployee} onChange={setStatusEmployee} options={dropdowns.statuses || []} />
+              <SearchableSelect placeholder="(Nationality)" value={nationality} onChange={setNationality} options={dropdowns.nationalities || []} />
+            </Box>
           </Stack>
-        </Stack>
-      </Paper>
+        </Paper>
 
       {/* Data Table — only this scrolls horizontally */}
       <Box sx={{ width: '100%' }}>
@@ -1726,6 +2309,7 @@ const MasterEmployee = () => {
             onPageChange={setPage}
             onPageSizeChange={setPageSize}
             loading={loading}
+            renderCollapsibleRow={renderCollapsibleRow}
           />
         </Box>
       </Box>
@@ -1817,7 +2401,7 @@ const MasterEmployee = () => {
 
                 {/* Dropdowns row 1 */}
                 <Grid item xs={12}>
-                  <Stack direction="row" spacing={1.5} flexWrap="wrap">
+                  <Stack direction="row" spacing={1.5} useFlexGap sx={{ flexWrap: 'wrap', gap: 1.5 }}>
                     <SearchableSelect placeholder="(Division)" value={wnaDivision} onChange={setWnaDivision} options={wnaDropdowns.divisions || []} minWidth={150} />
                     <SearchableSelect placeholder="(Unit)" value={wnaUnit} onChange={setWnaUnit} options={wnaDropdowns.units || []} minWidth={150} />
                     <SearchableSelect placeholder="(Position)" value={wnaPosition} onChange={setWnaPosition} options={wnaDropdowns.positions || []} minWidth={150} />
@@ -1826,7 +2410,7 @@ const MasterEmployee = () => {
 
                 {/* Dropdowns row 2 + Action buttons */}
                 <Grid item xs={12}>
-                  <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+                  <Stack direction="row" spacing={1.5} alignItems="center" useFlexGap sx={{ flexWrap: 'wrap', gap: 1.5 }}>
                     <SearchableSelect placeholder="(Branch)" value={wnaBranch} onChange={setWnaBranch} options={wnaDropdowns.branches || []} minWidth={150} />
                     <SearchableSelect placeholder="(Employee Type)" value={wnaEmployeeType} onChange={setWnaEmployeeType} options={wnaDropdowns.employeeTypes || []} minWidth={150} />
                     {isSpv && (

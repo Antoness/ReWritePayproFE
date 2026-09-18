@@ -1,29 +1,53 @@
 import React from 'react';
-import { Dialog, DialogTitle, DialogContent, Typography, IconButton } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, IconButton, Box } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 
-const CustomModal = ({ open, onClose, title, children, maxWidth = "sm" }) => {
+const CustomModal = ({ open, onClose, title, children, actions, maxWidth = 'sm' }) => {
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth={maxWidth} 
-      fullWidth 
-      PaperProps={{ sx: { borderRadius: 3 } }}
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth={maxWidth}
+      fullWidth
+      disableRestoreFocus
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 3,
+            bgcolor: 'background.paper',
+            backgroundImage: 'none'
+          }
+        }
+      }}
     >
-      <DialogTitle sx={{ borderBottom: '1px solid #e2e8f0', pb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b' }}>
+      <DialogTitle
+        component="div"
+        sx={{
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          pb: 2,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}
+      >
+        <Typography component="div" sx={{ fontWeight: 700, fontSize: '1.1rem', color: 'text.primary' }}>
           {title}
         </Typography>
         {onClose ? (
-          <IconButton onClick={onClose} size="small" sx={{ color: '#64748b' }}>
+          <IconButton onClick={onClose} size="small" sx={{ color: 'text.secondary' }}>
             <CloseIcon />
           </IconButton>
         ) : null}
       </DialogTitle>
-      <DialogContent sx={{ p: 3, pt: '24px !important' }}>
+      <DialogContent sx={{ p: 3, pt: '20px !important' }}>
         {children}
       </DialogContent>
+      {actions && (
+        <DialogActions sx={{ px: 3, pb: 2.5, pt: 1, borderTop: '1px solid', borderColor: 'divider' }}>
+          {actions}
+        </DialogActions>
+      )}
     </Dialog>
   );
 };

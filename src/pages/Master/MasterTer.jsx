@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import {
-  Box, Typography, Paper, Button, TextField, MenuItem, Select, FormControl,
-  Stack, Grid, IconButton, Dialog, DialogTitle, DialogContent, Alert
+  Box, Typography, Paper, Button, TextField,
+  Stack, Grid, IconButton, Chip, Alert, Tooltip
 } from '@mui/material';
 import {
-  History as HistoryIcon,
-  Edit as EditIcon,
-  Close as CloseIcon,
-  Add as AddIcon,
+  Calculate as CalculateIcon,
   CloudUpload as CloudUploadIcon,
   Download as DownloadIcon,
-  InfoOutlined as InfoIcon
+  InfoOutlined as InfoIcon,
+  CheckCircle as CheckCircleIcon,
+  DateRange as DateRangeIcon,
+  Category as CategoryIcon,
+  TableChart as TableChartIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import DataTable from '../../components/Common/DataTable';
+import SearchableSelect from '../../components/Common/SearchableSelect';
 import CustomSnackbar from '../../components/Common/CustomSnackbar';
 import CustomModal from '../../components/Common/CustomModal';
 import axios from 'axios';
@@ -47,7 +50,7 @@ const MasterTer = () => {
   const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
   const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
 
-  // Fetch dropdown years dari DB — HANYA isi list, tidak override selected year
+  // Fetch dropdown years dari DB
   const fetchDropdowns = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -56,7 +59,6 @@ const MasterTer = () => {
       });
       const fetchedYears = response.data.years || [];
 
-      // Pastikan tahun sekarang SELALU ada di list meski tidak ada di DB
       const currentYear = new Date().getFullYear().toString();
       if (!fetchedYears.includes(currentYear)) {
         fetchedYears.unshift(currentYear);
@@ -65,12 +67,11 @@ const MasterTer = () => {
       setYears(fetchedYears);
     } catch (err) {
       console.error('Error fetching TER dropdowns:', err);
-      // Fallback: minimal tampilkan tahun sekarang
       setYears([new Date().getFullYear().toString()]);
     }
   };
 
-  // Fetch upload dropdown years (NOW s/d +5 tahun)
+  // Fetch upload dropdown years
   const fetchUploadYears = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -79,7 +80,6 @@ const MasterTer = () => {
       });
       const fetchedYears = response.data.years || [];
       setUploadYears(fetchedYears);
-      // Default ke tahun sekarang
       const currentYear = new Date().getFullYear().toString();
       if (fetchedYears.includes(currentYear)) setUploadYear(currentYear);
       else if (fetchedYears.length > 0) setUploadYear(fetchedYears[0]);
@@ -101,9 +101,9 @@ const MasterTer = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      setTerData(response.data.content);
-      setTotalPages(response.data.totalPages);
-      setTotalElements(response.data.totalElements);
+      setTerData(response.data.content || []);
+      setTotalPages(response.data.totalPages || 1);
+      setTotalElements(response.data.totalElements || 0);
     } catch (err) {
       console.error('Error fetching TER data:', err);
       showSnackbar('Gagal mengambil data TER', 'error');
@@ -112,17 +112,14 @@ const MasterTer = () => {
     }
   };
 
-  // Fetch dropdown sekali saat mount
   useEffect(() => {
     fetchDropdowns();
   }, []);
 
-  // Reset ke page 1 saat year berubah (filter baru)
   useEffect(() => {
     if (year) setPage(1);
   }, [year]);
 
-  // Fetch data saat page/pageSize berubah (juga dipicu oleh reset page di atas)
   useEffect(() => {
     if (year) fetchTerData();
   }, [year, page, pageSize]);
@@ -165,13 +162,13 @@ const MasterTer = () => {
       });
 
       if (response.data.success) {
-        showSnackbar(response.data.message, 'success');
+        showSnackbar(response.data.message || 'Upload berhasil', 'success');
         setOpenUpload(false);
         setUploadFile(null);
         setUploadYear('');
-        fetchTerData(); // refresh tabel
+        fetchTerData();
       } else {
-        showSnackbar(response.data.message, 'error');
+        showSnackbar(response.data.message || 'Upload gagal', 'error');
       }
     } catch (err) {
       console.error('Error uploading TER:', err);
@@ -195,10 +192,10 @@ const MasterTer = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (response.data.success) {
-        showSnackbar(response.data.message, 'success');
-        fetchTerData(); // Refresh tabel
+        showSnackbar(response.data.message || 'Status tahun berhasil diperbarui', 'success');
+        fetchTerData();
       } else {
-        showSnackbar(response.data.message, 'error');
+        showSnackbar(response.data.message || 'Gagal update status', 'error');
       }
     } catch (err) {
       console.error('Error update status:', err);
@@ -208,78 +205,253 @@ const MasterTer = () => {
     }
   };
 
+  const formatNominal = (value) => {
+    if (!value && value !== 0) return '-';
+    const number = String(value).replace(/\D/g, '');
+    return new Intl.NumberFormat('id-ID').format(number);
+  };
+
   const columns = [
-    { id: 'Ter', label: 'Ter' },
-    { id: 'NilaiMin', label: 'Nilai Min' },
-    { id: 'NilaiMax', label: 'Nilai Max' },
-    { id: 'Persen', label: 'Persen' },
-    { id: 'Tahun', label: 'Tahun' },
+    { 
+      id: 'Ter', 
+      label: 'Kategori TER',
+      render: (row) => (
+        <Chip 
+          label={`TER ${row.Ter}`} 
+          size="small" 
+          sx={{ 
+            fontWeight: 800, 
+            bgcolor: row.Ter === 'A' ? '#eff6ff' : row.Ter === 'B' ? '#ecfdf5' : '#f5f3ff', 
+            color: row.Ter === 'A' ? '#1d4ed8' : row.Ter === 'B' ? '#059669' : '#7c3aed',
+            borderRadius: '6px' 
+          }} 
+        />
+      )
+    },
+    { 
+      id: 'NilaiMin', 
+      label: 'Penghasilan Bruto Min',
+      render: (row) => (
+        <Typography sx={{ fontWeight: 600, fontFamily: 'monospace', fontSize: '0.8125rem' }}>
+          Rp {formatNominal(row.NilaiMin)}
+        </Typography>
+      )
+    },
+    { 
+      id: 'NilaiMax', 
+      label: 'Penghasilan Bruto Max',
+      render: (row) => (
+        <Typography sx={{ fontWeight: 600, fontFamily: 'monospace', fontSize: '0.8125rem' }}>
+          {row.NilaiMax === '999999999999' || row.NilaiMax === 999999999999 ? 'Diatas Nilai Min' : `Rp ${formatNominal(row.NilaiMax)}`}
+        </Typography>
+      )
+    },
+    { 
+      id: 'Persen', 
+      label: 'Tarif Efektif (%)',
+      render: (row) => (
+        <Typography sx={{ fontWeight: 700, color: '#10b981' }}>
+          {row.Persen ? (String(row.Persen).includes('%') ? row.Persen : `${row.Persen}%`) : '0%'}
+        </Typography>
+      )
+    },
+    { 
+      id: 'Tahun', 
+      label: 'Tahun Pajak',
+      render: (row) => (
+        <Chip label={row.Tahun} size="small" sx={{ fontWeight: 700, bgcolor: 'action.hover', borderRadius: '6px' }} />
+      )
+    },
     { 
       id: 'Status', 
-      label: 'Status', 
+      label: 'Status Aktif', 
       render: (row) => {
         const isInactive = row.Status === 'TIDAK ACTIVE';
         return (
-          <Button 
-            disabled
-            sx={{ 
-              borderRadius: '20px', 
-              background: isInactive ? 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
-              color: 'white', 
-              border: 'none', 
-              padding: '2px 12px', 
-              fontWeight: 800, 
-              fontSize: '10px', 
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              textTransform: 'uppercase',
-              '&.Mui-disabled': { color: 'white', background: isInactive ? 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }
+          <Chip 
+            label={row.Status || 'ACTIVE'} 
+            size="small"
+            sx={{
+              fontWeight: 800,
+              fontSize: '0.75rem',
+              bgcolor: isInactive ? '#fef2f2' : '#ecfdf5',
+              color: isInactive ? '#dc2626' : '#059669',
+              borderRadius: '6px'
             }}
-          >
-            {row.Status}
-          </Button>
+          />
         );
       }
     }
   ];
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, color: '#1e293b' }}>Master TER</Typography>
-        <Typography variant="body2" color="text.secondary">Kelola data Tarif Efektif Rata-rata (TER) PPh 21</Typography>
+    <Box sx={{ p: { xs: 2, md: 3 } }}>
+      {/* Header Banner */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+        <Box sx={{
+          width: 52,
+          height: 52,
+          borderRadius: '16px',
+          background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          boxShadow: '0 8px 16px -4px rgba(2, 132, 199, 0.4)'
+        }}>
+          <CalculateIcon sx={{ fontSize: 28 }} />
+        </Box>
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', letterSpacing: '-0.02em' }}>
+            Master TER (Tarif Efektif Rata-Rata)
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Kelola tabel tarif TER PPh 21 Kategori A, B, dan C berdasarkan PP 58/2023 & PMK 168/2023
+          </Typography>
+        </Box>
       </Box>
 
-      <Paper sx={{ p: 3, mb: 3, borderRadius: 4, bgcolor: '#f1f5f9' }} elevation={0}>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <FormControl size="small" sx={{ minWidth: 200, bgcolor: 'white', borderRadius: 1 }}>
-            <Select value={year} onChange={(e) => setYear(e.target.value)}>
-              {years.map(y => <MenuItem key={y} value={y}>{y}</MenuItem>)}
-            </Select>
-          </FormControl>
-          
+      {/* KPI Cards */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 2, borderRadius: '16px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', gap: 2 }} elevation={0}>
+            <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0284c7' }}>
+              <DateRangeIcon sx={{ fontSize: 24 }} />
+            </Box>
+            <Box>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>Tahun Pajak Terpilih</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary' }}>{year || '2026'}</Typography>
+            </Box>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 2, borderRadius: '16px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', gap: 2 }} elevation={0}>
+            <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669' }}>
+              <TableChartIcon sx={{ fontSize: 24 }} />
+            </Box>
+            <Box>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>Total Baris Tarif TER</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary' }}>{totalElements} Baris</Typography>
+            </Box>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 2, borderRadius: '16px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', gap: 2 }} elevation={0}>
+            <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7c3aed' }}>
+              <CategoryIcon sx={{ fontSize: 24 }} />
+            </Box>
+            <Box>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>Kategori TER</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary' }}>A / B / C</Typography>
+            </Box>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 2, borderRadius: '16px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', gap: 2 }} elevation={0}>
+            <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}>
+              <CheckCircleIcon sx={{ fontSize: 24 }} />
+            </Box>
+            <Box>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>Status Regulasi</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: '#10b981' }}>PP 58 / 2023</Typography>
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* Filter Toolbar */}
+      <Paper sx={{ p: 2.5, mb: 3, borderRadius: '16px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }} elevation={0}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} sm={6} md={3}>
+            <SearchableSelect
+              label="Tahun Pajak"
+              options={years.map(y => ({ value: y, label: `Tahun ${y}` }))}
+              value={year}
+              onChange={(val) => setYear(val)}
+              placeholder="Pilih Tahun"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={() => { setPage(1); fetchTerData(); }}
+              sx={{
+                bgcolor: '#1e293b',
+                '&:hover': { bgcolor: '#0f172a' },
+                borderRadius: '10px',
+                height: '40px',
+                fontWeight: 700,
+                boxShadow: 'none'
+              }}
+            >
+              FILTER TAHUN
+            </Button>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* Action Toolbar Directly Above Table */}
+      <Paper sx={{ p: 2, mb: 2, borderRadius: '14px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }} elevation={0}>
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'text.primary' }}>
+            Tabel Tarif Efektif Rata-Rata ({year})
+          </Typography>
+          <Chip label={`${totalElements} Data`} size="small" sx={{ bgcolor: 'action.hover', fontWeight: 700, borderRadius: '6px' }} />
+        </Stack>
+
+        <Stack direction="row" spacing={1.5} flexWrap="wrap">
           <Button 
-            variant="outlined" 
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={handleDownloadTemplate}
+            sx={{
+              borderRadius: '10px',
+              fontWeight: 700,
+              color: 'text.primary',
+              borderColor: 'divider',
+              '&:hover': { borderColor: 'text.primary' },
+              height: '40px'
+            }}
+          >
+            TEMPLATE EXCEL
+          </Button>
+
+          <Button 
+            variant="contained" 
+            startIcon={<CloudUploadIcon />}
             onClick={() => { setOpenUpload(true); fetchUploadYears(); }}
-            sx={{ borderRadius: '8px', fontWeight: 800, color: '#3b82f6', borderColor: '#3b82f6', height: '40px' }}
+            sx={{ 
+              borderRadius: '10px', 
+              fontWeight: 700, 
+              bgcolor: '#3b82f6', 
+              '&:hover': { bgcolor: '#2563eb' },
+              boxShadow: 'none',
+              height: '40px'
+            }}
           >
             UPLOAD DATA
           </Button>
           
           <Button 
-            variant="outlined" 
+            variant="contained" 
             onClick={handleUpdateStatusTahunActive}
             disabled={updateLoading}
-            sx={{ borderRadius: '8px', fontWeight: 800, color: '#3b82f6', borderColor: '#3b82f6', height: '40px' }}
+            sx={{ 
+              borderRadius: '10px', 
+              fontWeight: 700, 
+              bgcolor: '#10b981', 
+              '&:hover': { bgcolor: '#059669' },
+              boxShadow: 'none',
+              height: '40px'
+            }}
           >
-            {updateLoading ? 'Updating...' : 'Update Status Tahun Active'}
+            {updateLoading ? 'MEMPROSES...' : `SET TAHUN ${year} AKTIF`}
           </Button>
-
-          <Typography variant="body2" sx={{ color: 'error.main', fontWeight: 600, fontStyle: 'italic' }}>
-            * Pilih Tahun yang akan Di Update
-          </Typography>
         </Stack>
       </Paper>
 
+      {/* Data Table */}
       <DataTable
         columns={columns}
         data={terData}
@@ -293,81 +465,74 @@ const MasterTer = () => {
       />
 
       {/* Modal Upload Master TER */}
-      <CustomModal open={openUpload} onClose={() => setOpenUpload(false)} title="Upload Master TER" maxWidth="sm">
-          <Stack spacing={3} sx={{ mt: 1 }}>
-            
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, bgcolor: '#f8fafc', borderRadius: 2, border: '1px dashed #cbd5e1' }}>
-              <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#334155' }}>Format Template</Typography>
-                <Typography variant="caption" color="text.secondary">Gunakan format excel yang sesuai sebelum upload.</Typography>
-              </Box>
-              <Button 
-                variant="outlined" 
-                startIcon={<DownloadIcon />} 
-                onClick={handleDownloadTemplate}
-                sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, borderColor: '#3b82f6', color: '#3b82f6' }}
-              >
-                Download Template
-              </Button>
+      <CustomModal open={openUpload} onClose={() => setOpenUpload(false)} title="Upload Master TER (Excel)" maxWidth="sm">
+        <Stack spacing={3} sx={{ mt: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, bgcolor: 'action.hover', borderRadius: '12px', border: '1px dashed', borderColor: 'divider' }}>
+            <Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary' }}>Format Template TER</Typography>
+              <Typography variant="caption" color="text.secondary">Gunakan format excel standar sebelum mengunggah berkas.</Typography>
             </Box>
-
-            <Paper elevation={0} sx={{ p: 3, border: '1px solid #e2e8f0', borderRadius: 2 }}>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: '#475569' }}>Tahun TER</Typography>
-                  <FormControl fullWidth size="small">
-                    <Select 
-                      displayEmpty 
-                      value={uploadYear} 
-                      onChange={(e) => setUploadYear(e.target.value)}
-                      sx={{ bgcolor: 'white', borderRadius: 1 }}
-                    >
-                      <MenuItem value="" disabled>(Pilih Tahun)</MenuItem>
-                      {uploadYears.map(y => <MenuItem key={y} value={y}>{y}</MenuItem>)}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: '#475569' }}>File Data TER (.xls / .xlsx)</Typography>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <TextField 
-                      type="file" 
-                      size="small" 
-                      fullWidth
-                      onChange={(e) => setUploadFile(e.target.files[0])}
-                      inputProps={{ accept: ".xls,.xlsx" }}
-                      sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 1 } }} 
-                    />
-                    <Button 
-                      variant="contained" 
-                      color="primary"
-                      startIcon={<CloudUploadIcon />}
-                      onClick={handleUpload}
-                      sx={{ px: 3, borderRadius: 1, fontWeight: 600, boxShadow: 'none' }}
-                      disabled={!uploadFile || !uploadYear || uploadLoading}
-                    >
-                      {uploadLoading ? 'Uploading...' : 'Upload'}
-                    </Button>
-                  </Box>
-                </Grid>
-              </Grid>
-            </Paper>
-
-            <Alert 
-              icon={<InfoIcon fontSize="inherit" />} 
-              severity="info" 
-              sx={{ borderRadius: 2, '& .MuiAlert-message': { width: '100%' } }}
+            <Button 
+              variant="outlined" 
+              startIcon={<DownloadIcon />} 
+              onClick={handleDownloadTemplate}
+              sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 700, borderColor: '#3b82f6', color: '#3b82f6' }}
             >
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>Kriteria Penginputan Data:</Typography>
-              <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                <Box component="span" sx={{ width: 4, height: 4, bgcolor: 'info.main', borderRadius: '50%', mr: 1 }} />
-                Kolom yang wajib diisi: <strong style={{ margin: '0 4px' }}>Semua Field Wajib Isi</strong>
-              </Typography>
-            </Alert>
-          </Stack>
+              Download Template
+            </Button>
+          </Box>
+
+          <Paper elevation={0} sx={{ p: 2.5, border: '1px solid', borderColor: 'divider', borderRadius: '12px', bgcolor: 'background.paper' }}>
+            <Grid container spacing={2.5}>
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700, color: 'text.primary' }}>Target Tahun Pajak</Typography>
+                <SearchableSelect
+                  options={uploadYears.map(y => ({ value: y, label: `Tahun ${y}` }))}
+                  value={uploadYear}
+                  onChange={(val) => setUploadYear(val)}
+                  placeholder="Pilih Tahun Upload"
+                />
+              </Grid>
+              
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700, color: 'text.primary' }}>File Excel (.xls / .xlsx)</Typography>
+                <Box sx={{ display: 'flex', gap: 1.5 }}>
+                  <TextField 
+                    type="file" 
+                    size="small" 
+                    fullWidth
+                    onChange={(e) => setUploadFile(e.target.files[0])}
+                    inputProps={{ accept: ".xls,.xlsx" }}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }} 
+                  />
+                  <Button 
+                    variant="contained" 
+                    startIcon={<CloudUploadIcon />}
+                    onClick={handleUpload}
+                    sx={{ px: 3, borderRadius: '8px', fontWeight: 700, bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' }, boxShadow: 'none' }}
+                    disabled={!uploadFile || !uploadYear || uploadLoading}
+                  >
+                    {uploadLoading ? 'Mengunggah...' : 'Upload'}
+                  </Button>
+                </Box>
+              </Grid>
+            </Grid>
+          </Paper>
+
+          <Alert 
+            icon={<InfoIcon fontSize="inherit" />} 
+            severity="info" 
+            sx={{ borderRadius: '12px', '& .MuiAlert-message': { width: '100%' } }}
+          >
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>Kriteria Penginputan Data:</Typography>
+            <Typography variant="body2">
+              Pastikan kolom <strong>Ter (A/B/C)</strong>, <strong>NilaiMin</strong>, <strong>NilaiMax</strong>, dan <strong>Persen</strong> terisi lengkap tanpa format simbol mata uang pada file Excel.
+            </Typography>
+          </Alert>
+        </Stack>
       </CustomModal>
 
+      {/* Snackbar */}
       <CustomSnackbar 
         open={snackbar.open} 
         message={snackbar.message} 
