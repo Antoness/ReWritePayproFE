@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8085';
 
 // Default tunjangan yang SELALU muncul untuk semua klien
 // Ini adalah list tetap yang sudah ada sebelumnya

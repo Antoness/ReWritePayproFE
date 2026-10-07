@@ -26,7 +26,7 @@ import CustomConfirmDialog from '../../components/Common/CustomConfirmDialog';
 import CustomModal from '../../components/Common/CustomModal';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || import.meta.env.REACT_APP_API_URL || 'http://localhost:8080';
+const API_URL = import.meta.env.VITE_API_URL || import.meta.env.REACT_APP_API_URL || 'http://localhost:8085';
 
 const MasterUmk = () => {
   const { user } = useSelector((state) => state.auth);

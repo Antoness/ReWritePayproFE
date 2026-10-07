@@ -371,7 +371,7 @@ const Layout = ({ children }) => {
         const token = localStorage.getItem('token');
         const pos = user?.position || '';
         if (pos && token) {
-          const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/roles/permissions/by-position?position=${encodeURIComponent(pos)}`, {
+          const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8085'}/api/roles/permissions/by-position?position=${encodeURIComponent(pos)}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           const keys = res.data.filter(p => p.canAccess).map(p => p.menuKey);

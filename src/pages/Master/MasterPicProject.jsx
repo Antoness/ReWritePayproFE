@@ -20,7 +20,7 @@ import DataTable from '../../components/Common/DataTable';
 import { useCascadingDropdowns } from '../../hooks/useCascadingDropdowns';
 import CustomModal from '../../components/Common/CustomModal';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8085';
 
 const MasterPicProject = () => {
   const [data, setData] = useState([]);

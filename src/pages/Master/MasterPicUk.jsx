@@ -22,7 +22,7 @@ import CustomModal from '../../components/Common/CustomModal';
 import { useCascadingDropdowns } from '../../hooks/useCascadingDropdowns';
 import { useDynamicClientDropdowns } from '../../hooks/useDynamicClientDropdowns';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8085';
 
 const MasterPicUk = () => {
   const { user } = useSelector((state) => state.auth || {});

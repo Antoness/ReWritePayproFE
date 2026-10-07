@@ -17,7 +17,7 @@ import axios from 'axios';
 import CustomConfirmDialog from '../../components/Common/CustomConfirmDialog';
 import SearchableSelect from '../../components/Common/SearchableSelect';
 
-const API_URL = import.meta.env.VITE_API_URL || import.meta.env.REACT_APP_API_URL || 'http://localhost:8080';
+const API_URL = import.meta.env.VITE_API_URL || import.meta.env.REACT_APP_API_URL || 'http://localhost:8085';
 
 const UserList = () => {
   const [users, setUsers] = useState([]);

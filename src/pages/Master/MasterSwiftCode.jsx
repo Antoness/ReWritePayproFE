@@ -20,7 +20,7 @@ import CustomConfirmDialog from '../../components/Common/CustomConfirmDialog';
 import CustomModal from '../../components/Common/CustomModal';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8085';
 
 const MasterSwiftCode = () => {
   const { user } = useSelector((state) => state.auth);
